@@ -21,9 +21,11 @@ app.use((req, res, next) => {
 // Rutas
 const user_routes = require('./routes/user');
 const follow_routes = require('./routes/follow');
+const publication_routes = require('./routes/publication');
 
 app.use('/api', user_routes);
 app.use('/api', follow_routes);
+app.use('/api', publication_routes);
 
 // Listar todas las rutas registradas al arrancar
 function listarRutas() {

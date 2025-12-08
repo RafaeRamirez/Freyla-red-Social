@@ -4,12 +4,9 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const jwt = require("../services/jwt");
 const mongoose = require("mongoose");
-const  follow  = require("../models/follow");
+const Follow = require("../models/follow");
 const fs = require("fs");
 const path = require("path");
-const { use } = require("react");
-const { count } = require("console");
-const { ErrorHandler } = require("@angular/core");
 
 // ========================
 // FUNCIONES AUXILIARES
@@ -78,6 +75,10 @@ async function saveUser(req, res) {
 // LOGIN USUARIO
 // ========================
 async function loginUser(req, res) {
+  if (!req.body) {
+    return res.status(400).send({ message: "No se recibió el cuerpo de la petición" });
+  }
+
   const { email, password, gettoken } = req.body;
 
   if (!email || !password) {
