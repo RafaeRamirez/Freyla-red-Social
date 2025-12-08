@@ -5,13 +5,15 @@ const moment = require("moment");
 const secret = "clave_secreta_curso_freyla";
 
 exports.ensureAuth = function (req, res, next) {
-  if (!req.headers.authorization) {
+  // Aceptar tanto "Authorization" como "authorization" y quitar prefijo Bearer si viene
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader) {
     return res
       .status(403)
       .send({ message: "La peticion no tiene la cabecera de autenticacion" });
   }
 
-  const token = req.headers.authorization.replace(/['"]+/g, "");
+  const token = authHeader.replace(/^Bearer\s+/i, "").replace(/['"]+/g, "");
   let payload;
 
   try {
