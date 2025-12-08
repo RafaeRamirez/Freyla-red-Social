@@ -1,3 +1,14 @@
-.node_modules
+# Dependencias y builds
+node_modules/
+
+# Archivos de entorno
+.env
+api/.env
+
+# Archivos generados/subidos
+uploads/
+api/uploads/
+
+# Miscelánea
 .DS_Store
 .index.js
