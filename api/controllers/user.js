@@ -5,6 +5,7 @@ const User = require("../models/user");
 const jwt = require("../services/jwt");
 const mongoose = require("mongoose");
 const Follow = require("../models/follow");
+const Publication = require("../models/publication");
 const fs = require("fs");
 const path = require("path");
 
@@ -12,7 +13,7 @@ const path = require("path");
 // FUNCIONES AUXILIARES
 // ========================
 function removeFilesOfUploads(res, filePath, message) {
-  fs.unlink(filePath, (err) => {
+  fs.unlink(filePath, () => {
     return res.status(400).send({ message });
   });
 }
@@ -38,7 +39,7 @@ async function saveUser(req, res) {
   const params = req.body;
 
   if (!params.name || !params.surname || !params.nick || !params.email || !params.password) {
-    return res.status(400).send({ message: "Envía todos los campos necesarios" });
+    return res.status(400).send({ message: "Envia todos los campos necesarios" });
   }
 
   try {
@@ -63,7 +64,7 @@ async function saveUser(req, res) {
     });
 
     const userStored = await user.save();
-    userStored.password = undefined; // No mostrar contraseña
+    userStored.password = undefined; // No mostrar contrasena
 
     return res.status(201).send({ user: userStored });
   } catch (error) {
@@ -76,22 +77,22 @@ async function saveUser(req, res) {
 // ========================
 async function loginUser(req, res) {
   if (!req.body) {
-    return res.status(400).send({ message: "No se recibió el cuerpo de la petición" });
+    return res.status(400).send({ message: "No se recibio el cuerpo de la peticion" });
   }
 
   const { email, password, gettoken } = req.body;
 
   if (!email || !password) {
-    return res.status(400).send({ message: "Debe enviar email y contraseña" });
+    return res.status(400).send({ message: "Debe enviar email y contrasena" });
   }
 
   try {
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    if (!user) return res.status(401).send({ message: "Correo o contraseña incorrectos." });
+    if (!user) return res.status(401).send({ message: "Correo o contrasena incorrectos." });
 
     const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return res.status(401).send({ message: "Correo o contraseña incorrectos." });
+    if (!passwordMatch) return res.status(401).send({ message: "Correo o contrasena incorrectos." });
 
     if (gettoken) {
       const token = jwt.createToken(user);
@@ -101,7 +102,7 @@ async function loginUser(req, res) {
       return res.status(200).send({ user });
     }
   } catch (error) {
-    return res.status(500).send({ message: "Error en el servidor al iniciar sesión.", error: error.message });
+    return res.status(500).send({ message: "Error en el servidor al iniciar sesion.", error: error.message });
   }
 }
 
@@ -111,70 +112,53 @@ async function loginUser(req, res) {
 async function getUser(req, res) {
   const userId = req.params.id;
 
-  // Validar el ID
   if (!mongoose.Types.ObjectId.isValid(userId)) {
-    return res.status(400).send({ message: "ID de usuario no válido" });
+    return res.status(400).send({ message: "ID de usuario no valido" });
   }
 
   try {
-    // Buscar usuario
-    User.findById(userId, async (err, user) => {
-      if (err) {
-        return res.status(500).send({ message: "Error en la petición" });
-      }
+    const user = await User.findById(userId).select("-password");
 
-      if (!user) {
-        return res.status(404).send({ message: "El usuario no existe" });
-      }
+    if (!user) {
+      return res.status(404).send({ message: "El usuario no existe" });
+    }
 
-      // 🔹 Llamar a followThisUser (lo que aparece en tu imagen)
-      const value = await followThisUser(req.user.sub, userId);
+    const { following, followed } = await followThisUser(req.user.sub, userId);
 
-      return res.status(200).send({
-        user,
-        following,
-        value
-      });
+    return res.status(200).send({
+      user,
+      following,
+      followed,
     });
-
   } catch (error) {
     return res.status(500).send({
-      message: "Error en la petición",
-      error: error.message
+      message: "Error en la peticion",
+      error: error.message,
     });
   }
 }
 
-
-
-// ==========================================================
-//     FUNCIÓN followThisUser (versión corregida + completa)
-// ==========================================================
+// ========================
+// FOLLOW HELPERS
+// ========================
 async function followThisUser(identity_user_id, user_id) {
   try {
-    // ¿El usuario logueado sigue al usuario del perfil?
     const following = await Follow.findOne({
       user: identity_user_id,
-      followed: user_id
+      followed: user_id,
     });
 
-    // ¿El usuario del perfil sigue al usuario logueado?
     const followed = await Follow.findOne({
       user: user_id,
-      followed: identity_user_id
+      followed: identity_user_id,
     });
 
-    return {
-      following,
-      followed
-    };
-
+    return { following, followed };
   } catch (err) {
     console.error("Error en followThisUser:", err);
     throw err;
   }
 }
-
 
 // ========================
 // OBTENER USUARIOS PAGINADOS
@@ -187,96 +171,79 @@ async function getUsers(req, res) {
 
   try {
     const skip = (page - 1) * itemsPerPage;
-    const [users, total] = await Promise.all([
-      User.find().sort("_id").skip(skip).limit(itemsPerPage).select("+password"),
-      User.countDocuments()
+    const [users, total, followInfo] = await Promise.all([
+      User.find().sort("_id").skip(skip).limit(itemsPerPage).select("-password"),
+      User.countDocuments(),
+      followUserIds(req.user.sub),
     ]);
 
     if (!users.length) {
       return res.status(404).send({ message: "No hay usuarios disponibles" });
     }
 
-    const { following, followed } = await followUserIds(req.user.sub);
-
     return res.status(200).send({
       users,
-      users_following: value.following,
-      users_follow_me: value.followwed,
+      users_following: followInfo.following,
+      users_follow_me: followInfo.followed,
       total,
       pages: Math.ceil(total / itemsPerPage),
       page,
-      following,
-      followed
+      following: followInfo.following,
+      followed: followInfo.followed,
     });
   } catch (error) {
-    return res.status(500).send({ message: "Error en la petición", error: error.message });
+    return res.status(500).send({ message: "Error en la peticion", error: error.message });
   }
 }
 
-async function followUserIds(user_id){
-    var following = await Follow.find({ "user": user_id }).select({ "_id": 0, "__v": 0,'user':0  }).exec((err, follows) => {
-          var follows_clean = [];
-          follows.forEach((follow) => {
-              follows_clean.push(follow.followed);
-          });
-          return follows_clean;
-      
+async function followUserIds(user_id) {
+  const followingDocs = await Follow.find({ user: user_id })
+    .select({ _id: 0, followed: 1 })
+    .lean();
 
-    });
+  const followedDocs = await Follow.find({ followed: user_id })
+    .select({ _id: 0, user: 1 })
+    .lean();
 
-       var followed = await Follow.find({ "followed": user_id }).select({ "_id": 0, "__v": 0 ,'followed':0 }).exec((err, follows) => {
-          var follows_clean = [];
-          follows.forEach((follow) => {
-              follows_clean.push(follow.user);
-          });
-          return follows_clean;
-      
-
-    });
-    return {
-      following: following,
-      followed: followed
-    };
+  return {
+    following: followingDocs.map((f) => f.followed),
+    followed: followedDocs.map((f) => f.user),
+  };
 }
 
-// Obtener contadores (a quién sigo y quién me sigue)
+// Obtener contadores (a quien sigo, quien me sigue y mis publicaciones)
 async function getCounters(req, res) {
-  // usuario autenticado por defecto
   let userId = req.user.sub;
 
-  // si viene un id por parámetro, usamos ese
   if (req.params.id) {
     userId = req.params.id;
   }
 
   try {
     const value = await getCountFollow(userId);
-
     return res.status(200).send(value);
-
   } catch (err) {
-    console.error('Error en getCounters:', err);
+    console.error("Error en getCounters:", err);
     return res.status(500).send({
-      message: 'Error en la petición',
-      error: err.message
+      message: "Error en la peticion",
+      error: err.message,
     });
   }
 }
 
-// Devuelve cuántos sigo y cuántos me siguen
+// Devuelve cuantos sigo, cuantos me siguen y cuantas publicaciones tengo
 async function getCountFollow(user_id) {
   try {
-    const following = await Follow.countDocuments({ user: user_id });
-    const followed  = await Follow.countDocuments({ followed: user_id });
+    const [following, followed, publications] = await Promise.all([
+      Follow.countDocuments({ user: user_id }),
+      Follow.countDocuments({ followed: user_id }),
+      Publication.countDocuments({ user: user_id }),
+    ]);
 
-    return {
-      following,
-      followed
-    };
-
+    return { following, followed, publications };
   } catch (err) {
-    console.error('Error en getCountFollow:', err);
-    throw err; // o llama aquí a tu handleError(err) si lo tienes
+    console.error("Error en getCountFollow:", err);
+    throw err;
   }
 }
 
@@ -299,7 +266,7 @@ async function updateUser(req, res) {
 
     return res.status(200).send({ user: userUpdated });
   } catch (error) {
-    return res.status(500).send({ message: "Error en la petición", error: error.message });
+    return res.status(500).send({ message: "Error en la peticion", error: error.message });
   }
 }
 
@@ -319,7 +286,7 @@ async function uploadImage(req, res) {
   try {
     if (userId !== req.user.sub) return removeFilesOfUploads(res, file_path, "No tienes permiso para actualizar esta imagen");
 
-    if (!allowedExtensions.includes(file_ext)) return removeFilesOfUploads(res, file_path, "Extensión no válida");
+    if (!allowedExtensions.includes(file_ext)) return removeFilesOfUploads(res, file_path, "Extension no valida");
 
     const userUpdated = await User.findByIdAndUpdate(userId, { image: file_name }, { new: true }).select("-password");
 
