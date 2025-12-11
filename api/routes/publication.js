@@ -20,5 +20,4 @@ api.get('/get-image-pub/:imageFile', PublicationController.getImageFile);
 
 
 
-
 module.exports = api;

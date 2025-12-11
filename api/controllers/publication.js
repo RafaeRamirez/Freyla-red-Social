@@ -9,10 +9,6 @@ const User = require('../models/user');
 const Follow = require('../models/follow');
 // const service = require('../services/index');
 
-function removeUploadedFile(filePath) {
-  fs.unlink(filePath, () => { /* noop */ });
-}
-
 function probando(req, res) {
   return res.status(200).send({
     message: 'Hola desde el controlador de publicaciones'
@@ -153,69 +149,81 @@ async function deletePublication(req, res) {
   }
 }
 
-// --------------------------------------------------
-// Subir imagen para una publicaciИn
-// --------------------------------------------------
+
+// ========================
+// SUBIR IMAGEN DE PUBLICACIÓN
+// ========================
 async function uploadImage(req, res) {
   const publicationId = req.params.id;
 
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).send({ message: 'No se ha subido ninguna imagen' });
+  if (!req.file) {
+    return res.status(400).send({ message: "No se ha subido ninguna imagen" });
   }
 
-  // connect-multiparty puede devolver {image: file} o {image: [files]}
-  const uploadedFiles = Object.values(req.files).flatMap((file) => Array.isArray(file) ? file : [file]);
-  const firstFile = uploadedFiles.find(f => f && f.path);
-
-  if (!firstFile) {
-    return res.status(400).send({ message: 'No se encontrИ archivo vКlido (usa el campo "image")' });
-  }
-
-  const file_path = firstFile.path;
+  const file_path = req.file.path;
   const file_name = path.basename(file_path);
-  const file_ext = path.extname(file_name).toLowerCase().replace('.', '');
-  const allowedExtensions = ['png', 'jpg', 'jpeg', 'gif'];
-
-  if (!allowedExtensions.includes(file_ext)) {
-    removeUploadedFile(file_path);
-    return res.status(400).send({ message: 'ExtensiИn no vКlida' });
-  }
+  const file_ext = path.extname(file_path).toLowerCase().replace(".", "");
+  const allowedExtensions = ["png", "jpg", "jpeg", "gif"];
 
   try {
-    const publicationUpdated = await Publication.findOneAndUpdate(
-      { _id: publicationId, user: req.user.sub },
+    // Comprobar que la publicación existe
+    const publication = await Publication.findById(publicationId);
+
+    if (!publication) {
+      return removeFilesOfUploads(res, file_path, "La publicación no existe");
+    }
+
+    // Solo el dueño de la publicación puede actualizar la imagen
+    if (publication.user.toString() !== req.user.sub) {
+      return removeFilesOfUploads(
+        res,
+        file_path,
+        "No tienes permiso para actualizar esta publicación"
+      );
+    }
+
+    // Validar extensión
+    if (!allowedExtensions.includes(file_ext)) {
+      return removeFilesOfUploads(res, file_path, "Extensión no válida");
+    }
+
+    // Actualizar campo file de la publicación
+    const publicationUpdated = await Publication.findByIdAndUpdate(
+      publicationId,
       { file: file_name },
       { new: true }
-    );
+    ).populate("user");
 
     if (!publicationUpdated) {
-      removeUploadedFile(file_path);
-      return res.status(404).send({ message: 'No puedes subir imagen a esta publicaciИn' });
+      return res
+        .status(404)
+        .send({ message: "No se ha podido actualizar la publicación" });
     }
 
     return res.status(200).send({ publication: publicationUpdated });
-  } catch (err) {
-    removeUploadedFile(file_path);
+  } catch (error) {
     return res.status(500).send({
-      message: 'Error al subir la imagen de la publicaciИn',
-      error: err.message
+      message: "Error en el servidor al subir la imagen de la publicación.",
+      error: error.message,
     });
   }
 }
 
-// --------------------------------------------------
-// Devolver imagen de una publicaciИn
-// --------------------------------------------------
+// ========================
+// MOSTRAR IMAGEN DE PUBLICACIÓN
+// ========================
 function getImageFile(req, res) {
   const imageFile = req.params.imageFile;
-  const pathFile = path.resolve(`./uploads/publications/${imageFile}`);
+  const pathFile = "./uploads/publications/" + imageFile;
 
-  fs.access(pathFile, fs.constants.F_OK, (err) => {
-    if (err) {
-      return res.status(404).send({ message: 'No existe la imagen...' });
+  fs.exists(pathFile, (exists) => {
+    if (exists) {
+      return res.sendFile(path.resolve(pathFile));
+    } else {
+      return res
+        .status(404)
+        .send({ message: "No existe la imagen de la publicación..." });
     }
-
-    return res.sendFile(pathFile);
   });
 }
 
@@ -226,5 +234,5 @@ module.exports = {
   getPublication,
   deletePublication,
   uploadImage,
-  getImageFile,
+  getImageFile
 };
