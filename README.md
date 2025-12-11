@@ -1,5 +1,3 @@
-# Freyla-red-Social
-
 # Freyla Social Backend
 
 Node.js + Express REST API for a small social network: users, follows, timeline publications, and image uploads.
