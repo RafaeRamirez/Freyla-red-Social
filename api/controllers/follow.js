@@ -145,7 +145,13 @@ async function getYouFollowMe(req, res) {
 }
 
 
+function getFollowedUsers(req, res) {
+  const userId = req.user.sub;
 
+
+
+
+}
 module.exports = {
   saveFollow,
   deleteFollow,

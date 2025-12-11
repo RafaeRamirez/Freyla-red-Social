@@ -346,13 +346,7 @@ function getImageFile(req, res) {
     }
   });
 }
-function getFollowedUsers(req, res) {
-  const userId = req.user.sub;
 
-
-
-
-}
 // ========================
 // EXPORTAR TODAS LAS FUNCIONES
 // ========================
