@@ -116,23 +116,19 @@ async function getUnviewedMessages(req, res) {
   }
 }
 
-async function setViewedMessages(req, res) {
-  const userId = req.user.sub;
-  try {
-    const result = await Message.updateMany(
-      { receiver: userId, viewed: 'false' },
-      { viewed: 'true' }
-    );
+function setViewedMessages(req, res) {
+  const userId = req.user.sub;  
 
-    const updated =
-      typeof result.modifiedCount === 'number'
-        ? result.modifiedCount
-        : result.nModified || 0;
+  Message.Update({receiver: userId, viewed: 'false'}, {viewed: 'true'}, {"multi": true}, (err, messageUpdated) => {
+    if (err) {
+      return res.status(500).send({message: 'Error en la peticion', error: err.message});
+    }
 
-    return res.status(200).send({ updated });
-  } catch (err) {
-    return res.status(500).send({ message: 'Error en la peticion', error: err.message });
-  }
+    return res.status(200).send({messages: messageUpdated});
+  });
+
+
+   
 }
 
 module.exports = {
