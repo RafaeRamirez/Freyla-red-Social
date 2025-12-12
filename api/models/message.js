@@ -1,15 +1,14 @@
-'use strict'
+'use strict';
 
-var mongoose = require('mongoose');
-const { schema, create } = require('./user');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-var MessageSchema =  schema ({
-     text: String,
-     viewed: String,
-     created_at: String,
-     emitter:  {type: Schema.ObjectId, ref: 'User'},
-     receiver: {type: Schema.ObjectId, ref: 'User'}
+const MessageSchema = Schema({
+  text: String,
+  viewed: String,
+  created_at: String,
+  emitter: { type: Schema.ObjectId, ref: 'User' },
+  receiver: { type: Schema.ObjectId, ref: 'User' }
 });
 
 module.exports = mongoose.model('Message', MessageSchema);
