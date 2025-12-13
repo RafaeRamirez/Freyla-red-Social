@@ -1,0 +1,38 @@
+main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+  text-align: center;
+}
+
+.navbar {
+  border-radius: 0;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nav-link {
+  font-weight: 600;
+  color: #f5f7ff;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+router-outlet {
+  flex: 1 0 auto;
+}

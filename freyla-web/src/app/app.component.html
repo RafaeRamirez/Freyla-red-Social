@@ -1,15 +1,65 @@
 
 <main class="main">
-  <nav class="navbar navbar-default">
-    <div class="container">
-      <div class="navbar-header">
-        <a href="#"     class="navbar-brand" routerLink="/">{{
-            title
-        }}
-        </a>
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-gradient shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand" routerLink="/">{{ title }}</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#mainNavbar"
+        aria-controls="mainNavbar"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+
+
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2" routerLink="/Inicio">
+              <span class="bi bi-box-arrow-in-right"></span>
+              <span>Inicio</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2" routerLink="/Timiline">
+              <span class="bi bi-person-plus"></span>
+              <span>Timiline</span>
+
+            </a>
+          </li>
+           <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2" routerLink="/Gente">
+              <span class="bi bi-person-plus"></span>
+              <span>Gente</span>
+
+            </a>
+          </li>
+        </ul>
+
+
       </div>
+
+
+      
+
     </div>
   </nav>
+    
 
-  <router-outlet />
+
+  <section class="content-area">
+    
+    
+    <router-outlet></router-outlet> 
+  </section>
 </main>
+ 
+<footer class="footer mt-auto py-3 bg-light">
+  <div class="container text-center">
+    <span class="text-muted">© 2024 Freyla. All rights reserved.</span>
+  </div>
