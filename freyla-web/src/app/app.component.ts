@@ -9,6 +9,5 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  public title = ' Freyla';
-  public Description = ' Red Social para compartir tus momentos favoritos con amigos y familiares.';
+  title = 'freyla';
 }

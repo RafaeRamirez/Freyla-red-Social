@@ -1,10 +1,10 @@
 {
-  "name": "angular",
+  "name": "freyla-web",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "server": "ng serve",
     "start": "ng serve",
+    "server": "npm start",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

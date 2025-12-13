@@ -1,12 +1,9 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
-  "cli": {
-    "packageManager": "npm"
-  },
   "newProjectRoot": "projects",
   "projects": {
-    "angular": {
+    "freyla-web": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -20,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/angular",
+            "outputPath": "dist/freyla-web",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -65,10 +62,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "angular:build:production"
+              "buildTarget": "freyla-web:build:production"
             },
             "development": {
-              "buildTarget": "angular:build:development"
+              "buildTarget": "freyla-web:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -76,7 +73,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "angular:build"
+            "buildTarget": "freyla-web:build"
           }
         },
         "test": {
