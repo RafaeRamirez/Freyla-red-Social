@@ -1,9 +1,13 @@
 # Dependencias y builds
 node_modules/
+freyla-web/dist/
+freyla-web/.angular/
+freyla-web/coverage/
 
 # Archivos de entorno
 .env
 api/.env
+freyla-web/.env
 
 # Archivos generados/subidos
 uploads/
@@ -12,3 +16,5 @@ api/uploads/
 # Miscelánea
 .DS_Store
 .index.js
+*.log
+.vscode/

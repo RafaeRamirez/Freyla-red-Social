@@ -1,5 +1,6 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 :root {
   --frelya-navy: #0c1326;
@@ -19,6 +20,18 @@ body {
               linear-gradient(180deg, var(--frelya-space) 0%, var(--frelya-navy) 60%, #080c1a 100%);
   color: var(--frelya-text);
   min-height: 100vh;
+  font-family: 'Manrope', 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Space Grotesk', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    system-ui, sans-serif;
+  letter-spacing: -0.015em;
 }
 
 .navbar-gradient {
