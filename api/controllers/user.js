@@ -43,12 +43,25 @@ async function saveUser(req, res) {
   }
 
   try {
+    const emailLower = params.email.toLowerCase();
+    const nickLower = params.nick.toLowerCase();
+
     const existingUser = await User.findOne({
-      $or: [{ email: params.email.toLowerCase() }, { nick: params.nick.toLowerCase() }],
+      $or: [{ email: emailLower }, { nick: nickLower }],
     });
 
     if (existingUser) {
-      return res.status(409).send({ message: "El usuario ya existe con ese email o nick." });
+      const emailTaken = existingUser.email === emailLower;
+      const nickTaken = existingUser.nick === nickLower;
+      let message = "El email o nick ya esta en uso.";
+      if (emailTaken && nickTaken) {
+        message = "El email y el nick ya estan en uso.";
+      } else if (emailTaken) {
+        message = "El email ya esta en uso.";
+      } else if (nickTaken) {
+        message = "El nick ya esta en uso.";
+      }
+      return res.status(409).send({ message, emailTaken, nickTaken });
     }
 
     const hashedPassword = await bcrypt.hash(params.password, 10);
@@ -56,8 +69,8 @@ async function saveUser(req, res) {
     const user = new User({
       name: params.name,
       surname: params.surname,
-      nick: params.nick.toLowerCase(),
-      email: params.email.toLowerCase(),
+      nick: nickLower,
+      email: emailLower,
       password: hashedPassword,
       role: "ROLE_USER",
       image: null,

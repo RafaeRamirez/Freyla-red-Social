@@ -29,6 +29,36 @@ export class UserService {
     return this.http.put<User>(`${this.apiUrl}/update-user/${id}`, data, this.authHeaders(token));
   }
 
+  setSession(token?: string, identity?: unknown): void {
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+    if (identity) {
+      localStorage.setItem('identity', JSON.stringify(identity));
+    }
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  getIdentity<T = User>(): T | null {
+    const stored = localStorage.getItem('identity');
+    if (!stored) {
+      return null;
+    }
+    try {
+      return JSON.parse(stored) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  clearSession(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('identity');
+  }
+
   private authHeaders(token: string) {
     return {
       headers: new HttpHeaders({

@@ -43,19 +43,21 @@
           placeholder="Escribe tu nick"
           required
         />
+        <small class="text-danger" *ngIf="nickTaken">Este nick ya esta en uso.</small>
       </div>
 
       <div class="form-group mb-3">
-        <label for="email">Correo electrónico</label>
+        <label for="email">Correo electronico</label>
         <input
           type="email"
           class="form-control"
           id="email"
           name="email"
           [(ngModel)]="user.email"
-          placeholder="Escribe tu correo electrónico"
+          placeholder="Escribe tu correo electronico"
           required
         />
+        <small class="text-danger" *ngIf="emailTaken">Este correo ya esta en uso.</small>
       </div>
 
       <div class="form-group mb-4">
@@ -66,12 +68,20 @@
           id="password"
           name="password"
           [(ngModel)]="user.password"
-          placeholder="Escribe tu contraseña"
+          placeholder="Escribe tu contrasena"
           required
         />
       </div>
 
-      <button type="submit" class="btn btn-primary w-100">Registrarse</button>
+      <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>{{ loading ? 'Registrando...' : 'Registrarse' }}</span>
+      </button>
+
+      <div class="register-footer text-center">
+        <span>¿Ya tienes cuenta?</span>
+        <a routerLink="/login">Inicia sesión aquí</a>
+      </div>
     </form>
   </div>
 </div>

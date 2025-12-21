@@ -1,3 +1,64 @@
-<h1> 
-    {{ title }}
-</h1>
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header text-center">
+      <h1 class="mb-1">{{ title }}</h1>
+      <p>Inicia sesion para continuar</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit(loginForm)" #loginForm="ngForm">
+      <div class="form-group mb-3">
+        <label for="email">Correo electronico</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          name="email"
+          placeholder="tucorreo@ejemplo.com"
+          [(ngModel)]="email"
+          required
+          email
+        />
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="password">Contrasena</label>
+        <div class="input-group password-group">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            class="form-control"
+            id="password"
+            name="password"
+            placeholder="Ingresa tu contrasena"
+            [(ngModel)]="password"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-light password-toggle"
+            (click)="togglePassword()"
+            [attr.aria-pressed]="showPassword"
+          >
+            {{ showPassword ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="alert alert-danger py-2" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+      <div class="alert alert-success py-2" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" [disabled]="!loginForm.form.valid || loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>{{ loading ? 'Ingresando...' : 'Iniciar sesion' }}</span>
+      </button>
+
+      <div class="login-footer">
+        <span>Aun no tienes cuenta?</span>
+        <a routerLink="/registro">Registrate aqui</a>
+      </div>
+    </form>
+  </div>
+</div>

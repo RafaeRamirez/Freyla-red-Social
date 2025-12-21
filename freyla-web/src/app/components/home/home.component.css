@@ -1,0 +1,71 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.home-hero {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.5rem;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 79, 215, 0.08), transparent 35%),
+    radial-gradient(circle at 80% 30%, rgba(36, 216, 255, 0.08), transparent 35%),
+    linear-gradient(135deg, rgba(10, 15, 31, 0.95), rgba(12, 19, 38, 0.92));
+  color: #e8ecf5;
+}
+
+.home-content {
+  max-width: 720px;
+  text-align: center;
+}
+
+.eyebrow {
+  color: #24d8ff;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 3vw, 2.8rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: rgba(232, 236, 245, 0.9);
+  margin-bottom: 1.5rem;
+}
+
+.cta-group {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--frelya-pink, #ff4fd7), var(--frelya-cyan, #24d8ff));
+  color: #0a0f1f;
+}
+
+.btn-outline-light {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #e8ecf5;
+  background: transparent;
+}
+
+.btn-outline-light:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+}
