@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { UserService } from './services/user.service';
+import { User } from './models/user';
+import { global } from './services/global';
 
 @Component({
   selector: 'app-root',
@@ -10,29 +12,25 @@ import { UserService } from './services/user.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'freyla';
-  identity: unknown = null;
   menuOpen = false;
+  private readonly apiUrl = global.url;
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService, private router: Router) {}
 
-  ngOnInit(): void {
-    this.loadSession();
+  get identity(): User | null {
+    return this.userService.getIdentity<User>();
   }
 
   get isLogged(): boolean {
     return !!this.userService.getToken();
   }
 
-  loadSession(): void {
-    this.identity = this.userService.getIdentity();
-  }
-
   logout(): void {
     this.userService.clearSession();
-    this.identity = null;
     this.menuOpen = false;
+    this.router.navigate(['/login']);
   }
 
   toggleMenu(): void {
@@ -41,5 +39,12 @@ export class AppComponent implements OnInit {
 
   closeMenu(): void {
     this.menuOpen = false;
+  }
+
+  getAvatarUrl(image?: string): string | null {
+    if (!image) {
+      return null;
+    }
+    return `${this.apiUrl}/get-image-user/${image}`;
   }
 }

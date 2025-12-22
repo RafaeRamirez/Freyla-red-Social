@@ -20,11 +20,79 @@ main {
 .navbar-brand {
   font-weight: 700;
   letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+
+.brand-logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  background: #0a0f1f;
+}
+
+.brand-text {
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
 }
 
 .nav-link {
   font-weight: 600;
   color: #f5f7ff;
+}
+
+.nav-pages {
+  margin-left: 1.5rem;
+  gap: 1.25rem;
+}
+
+.nav-pages .nav-link {
+  padding: 0.35rem 0;
+}
+
+.nav-user-menu {
+  gap: 0.5rem;
+}
+
+.nav-user .dropdown-toggle::after {
+  margin-left: 0.35rem;
+}
+
+.nav-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.nav-avatar-icon {
+  font-size: 1.6rem;
+  color: #f5f7ff;
+}
+
+.nav-user-name {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dropdown-menu {
+  background: rgba(15, 20, 35, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.dropdown-item {
+  color: #e8ecf5;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-link:hover,

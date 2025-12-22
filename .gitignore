@@ -13,8 +13,89 @@ freyla-web/.env
 uploads/
 api/uploads/
 
+# Imagenes
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+
 # Miscelánea
 .DS_Store
 .index.js
 *.log
 .vscode/
+
+# Extras
+dist/
+coverage/
+.angular/
+.cache/
+tmp/
+temp/
+*.tsbuildinfo
+.env.*
+!.env.example
+Thumbs.db
+Desktop.ini
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.idea/
+*.sublime-project
+*.sublime-workspace
+.history/
+.vscode-test/
+*.swp
+*.swo
+*.swn
+*~
+.eslintcache
+.stylelintcache
+.prettiercache
+.parcel-cache/
+.turbo/
+api/dist/
+api/coverage/
+
+# Llaves y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+
+# Bases de datos locales
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+
+# Node/Angular tooling
+out-tsc/
+.nyc_output/
+node_modules/.cache/
+.pnpm-store/
+.npm/
+*.pid
+*.pid.lock
+*.seed
+*.tmp
+*.bak
+*.orig
+*.rej
+*.stackdump
+
+# Windows/Misc
+ehthumbs.db
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

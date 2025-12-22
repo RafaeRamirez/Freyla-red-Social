@@ -25,25 +25,63 @@ export class UserService {
     return this.http.get<User>(`${this.apiUrl}/user/${id}`, this.authHeaders(token));
   }
 
-  updateUser(id: string, data: Partial<User>, token: string): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/update-user/${id}`, data, this.authHeaders(token));
+  updateUser(
+    id: string,
+    data: Partial<User> & { currentPassword?: string },
+    token: string
+  ): Observable<{ user: User }> {
+    return this.http.put<{ user: User }>(`${this.apiUrl}/update-user/${id}`, data, this.authHeaders(token));
   }
 
-  setSession(token?: string, identity?: unknown): void {
-    if (token) {
-      localStorage.setItem('token', token);
-    }
-    if (identity) {
-      localStorage.setItem('identity', JSON.stringify(identity));
-    }
+  updateUserImage(id: string, file: File, token: string): Observable<{ user: User }> {
+    const formData = new FormData();
+    formData.append('image', file, file.name);
+    return this.http.post<{ user: User }>(
+      `${this.apiUrl}/update-image-user/${id}`,
+      formData,
+      this.authHeaders(token)
+    );
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('token');
+  getUsers(
+    page: number,
+    token: string
+  ): Observable<{
+    users: User[];
+    total: number;
+    pages: number;
+    page: number;
+    users_following: string[];
+    users_follow_me: string[];
+  }> {
+    return this.http.get<{
+      users: User[];
+      total: number;
+      pages: number;
+      page: number;
+      users_following: string[];
+      users_follow_me: string[];
+    }>(`${this.apiUrl}/users/${page}`, this.authHeaders(token));
   }
 
-  getIdentity<T = User>(): T | null {
-    const stored = localStorage.getItem('identity');
+  getCounters(userId?: string): Observable<{ following: number; followed: number; publications: number }> {
+    const token = this.getToken();
+    const headers = new HttpHeaders({
+      Authorization: token ? `Bearer ${token}` : '',
+    });
+    const path = userId ? `/counters/${userId}` : '/counters';
+    return this.http.get<{ following: number; followed: number; publications: number }>(
+      `${this.apiUrl}${path}`,
+      { headers }
+    );
+  }
+
+  setStats(stats: { following: number; followed: number; publications: number }): void {
+    localStorage.setItem('stats', JSON.stringify(stats));
+  }
+
+  getStats<T = { following: number; followed: number; publications: number }>(): T | null {
+    const stored = localStorage.getItem('stats');
     if (!stored) {
       return null;
     }
@@ -54,9 +92,42 @@ export class UserService {
     }
   }
 
+  setSession(token?: string, identity?: unknown): void {
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+    if (identity) {
+      localStorage.setItem('identity', JSON.stringify(identity));
+    } else if (token) {
+      const decoded = this.decodeTokenPayload(token);
+      if (decoded) {
+        localStorage.setItem('identity', JSON.stringify(decoded));
+      }
+    }
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  getIdentity<T = User>(): T | null {
+    const stored = localStorage.getItem('identity');
+    if (!stored) {
+      const token = localStorage.getItem('token');
+      return this.decodeTokenPayload<T>(token);
+    }
+    try {
+      return JSON.parse(stored) as T;
+    } catch {
+      const token = localStorage.getItem('token');
+      return this.decodeTokenPayload<T>(token);
+    }
+  }
+
   clearSession(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('identity');
+    localStorage.removeItem('stats');
   }
 
   private authHeaders(token: string) {
@@ -65,5 +136,23 @@ export class UserService {
         Authorization: `Bearer ${token}`,
       }),
     };
+  }
+
+  private decodeTokenPayload<T>(token?: string | null): T | null {
+    if (!token) {
+      return null;
+    }
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+    try {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const json = atob(padded);
+      return JSON.parse(json) as T;
+    } catch {
+      return null;
+    }
   }
 }

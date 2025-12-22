@@ -1,0 +1,81 @@
+<section class="users-wrapper">
+  <div class="users-header">
+    <p class="eyebrow">Comunidad</p>
+    <h1>{{ title }}</h1>
+    <p class="subtitle">Conoce personas nuevas y conecta con la comunidad Freyla.</p>
+  </div>
+
+  <div class="alert alert-danger py-2" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="users-grid" *ngIf="!loading && users.length; else usersState">
+    <article class="user-card" *ngFor="let user of users">
+      <div class="user-avatar">
+        <ng-container *ngIf="getAvatarUrl(user.image) as avatarUrl; else avatarFallback">
+          <img [src]="avatarUrl" [alt]="user.name" />
+        </ng-container>
+        <ng-template #avatarFallback>
+          <span class="bi bi-person-circle" aria-hidden="true"></span>
+        </ng-template>
+      </div>
+
+      <div class="user-info">
+        <h3>{{ user.name }} {{ user.surname }}</h3>
+        <p class="user-nick">{{ '@' + user.nick }}</p>
+        <p class="user-email">{{ user.email }}</p>
+      </div>
+
+      <div class="user-meta">
+        <button
+          class="btn btn-outline-light follow-btn"
+          type="button"
+          *ngIf="!isFollowing(user)"
+          (click)="followUser(user._id)"
+          [disabled]="followLoadingId === user._id"
+        >
+          <span *ngIf="followLoadingId === user._id" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Seguir
+        </button>
+        <button
+          class="btn btn-primary follow-btn"
+          type="button"
+          *ngIf="isFollowing(user)"
+          (click)="unfollowUser(user._id)"
+          [disabled]="followLoadingId === user._id"
+        >
+          <span *ngIf="followLoadingId === user._id" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Siguiendo
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <ng-template #usersState>
+    <div class="users-state">
+      <div *ngIf="loading" class="state-loading">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>Cargando usuarios...</span>
+      </div>
+      <div *ngIf="!loading && !users.length && !errorMessage" class="state-empty">
+        <span>No hay usuarios para mostrar.</span>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="pagination" *ngIf="pages > 1">
+    <a
+      class="page-link"
+      [routerLink]="['/gente', prevPage]"
+      [class.disabled]="page === 1"
+      >Anterior</a
+    >
+    <span class="page-info">Pagina {{ page }} de {{ pages }}</span>
+    <a
+      class="page-link"
+      [routerLink]="['/gente', nextPage]"
+      [class.disabled]="page === pages"
+      >Siguiente</a
+    >
+  </div>
+</section>

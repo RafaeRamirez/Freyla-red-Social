@@ -265,15 +265,34 @@ async function getCountFollow(user_id) {
 // ========================
 async function updateUser(req, res) {
   const userId = req.params.id;
-  const update = req.body;
-
-  if (update.password) delete update.password;
+  const update = { ...req.body };
 
   if (userId !== req.user.sub) {
     return res.status(403).send({ message: "No tienes permiso para actualizar los datos de este usuario" });
   }
 
   try {
+    const currentPassword = update.currentPassword;
+    if (!currentPassword) {
+      return res.status(400).send({ message: "Debes enviar la contrasena actual." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send({ message: "No se ha podido actualizar el usuario" });
+
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatch) {
+      return res.status(401).send({ message: "Contrasena actual incorrecta." });
+    }
+
+    delete update.currentPassword;
+
+    if (update.password) {
+      update.password = await bcrypt.hash(update.password, 10);
+    } else {
+      delete update.password;
+    }
+
     const userUpdated = await User.findByIdAndUpdate(userId, update, { new: true }).select("-password");
     if (!userUpdated) return res.status(404).send({ message: "No se ha podido actualizar el usuario" });
 

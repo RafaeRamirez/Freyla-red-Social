@@ -1,8 +1,11 @@
-
+﻿
 <main class="main">
-  <nav class="navbar navbar-dark navbar-gradient shadow-sm">
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-gradient shadow-sm">
     <div class="container-fluid">
-      <a class="navbar-brand" routerLink="/">{{ title }}</a>
+      <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/home" (click)="closeMenu()">
+        <img src="assets/logo-freyla.png" alt="Freyla" class="brand-logo-img" />
+        <span class="brand-text">{{ title }}</span>
+      </a>
       <button
         class="navbar-toggler"
         type="button"
@@ -13,16 +16,13 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-
       <div class="collapse navbar-collapse" [class.show]="menuOpen" id="mainNavbar">
-
-
-        <ul class="navbar-nav ms-auto">
-          <ng-container *ngIf="!isLogged; else loggedLinks">
+        <ng-container *ngIf="!isLogged; else loggedLinks">
+          <ul class="navbar-nav ms-auto">
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center gap-2" routerLink="/login" routerLinkActive="active" (click)="closeMenu()">
                 <span class="bi bi-box-arrow-in-right"></span>
-                <span>Iniciar sesión</span>
+                <span>Iniciar sesion</span>
               </a>
             </li>
             <li class="nav-item">
@@ -31,9 +31,11 @@
                 <span>Registrarse</span>
               </a>
             </li>
-          </ng-container>
+          </ul>
+        </ng-container>
 
-          <ng-template #loggedLinks>
+        <ng-template #loggedLinks>
+          <ul class="navbar-nav nav-pages">
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center gap-2" routerLink="/home" routerLinkActive="active" (click)="closeMenu()">
                 <span class="bi bi-house-door"></span>
@@ -49,19 +51,51 @@
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center gap-2" routerLink="/gente" routerLinkActive="active" (click)="closeMenu()">
                 <span class="bi bi-people"></span>
-                <span>Gente</span>
+                <span>Usuarios</span>
               </a>
             </li>
-            <li class="nav-item">
-              <button class="btn btn-link nav-link d-flex align-items-center gap-2 text-decoration-none" (click)="logout()">
-                <span class="bi bi-box-arrow-right"></span>
-                <span>Salir</span>
-              </button>
+          </ul>
+
+          <ul class="navbar-nav ms-auto nav-user-menu">
+            <li class="nav-item dropdown nav-user" *ngIf="identity as user">
+              <a
+                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <ng-container *ngIf="getAvatarUrl(user.image) as avatarUrl; else avatarFallback">
+                  <img [src]="avatarUrl" [alt]="user.name" class="nav-avatar" />
+                </ng-container>
+                <ng-template #avatarFallback>
+                  <span class="bi bi-person-circle nav-avatar-icon" aria-hidden="true"></span>
+                </ng-template>
+                <span class="nav-user-name">{{ user.name }} {{ user.surname }}</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item d-flex align-items-center gap-2" routerLink="/home" (click)="closeMenu()">
+                    <span class="bi bi-person"></span>
+                    <span>Mi perfil</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item d-flex align-items-center gap-2" routerLink="/mis-datos" (click)="closeMenu()">
+                    <span class="bi bi-gear"></span>
+                    <span>Mis datos</span>
+                  </a>
+                </li>
+                <li>
+                  <button class="dropdown-item d-flex align-items-center gap-2" type="button" (click)="logout()">
+                    <span class="bi bi-box-arrow-right"></span>
+                    <span>Cerrar sesion</span>
+                  </button>
+                </li>
+              </ul>
             </li>
-          </ng-template>
-        </ul>
-
-
+          </ul>
+        </ng-template>
       </div>
 
 
@@ -81,5 +115,5 @@
  
 <footer class="footer mt-auto py-3 bg-light">
   <div class="container text-center">
-    <span class="text-muted">© 2024 Freyla. Reservados todos los derechos.</span>
+    <span class="text-muted">(c) 2025 Freyla. Reservados todos los derechos.</span>
   </div>

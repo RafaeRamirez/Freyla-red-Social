@@ -1,0 +1,147 @@
+<div class="user-edit-wrapper">
+  <div class="user-edit-card">
+    <div class="user-edit-header text-center">
+      <h1 class="mb-1">{{ title }}</h1>
+      <p>Actualiza tu perfil para mantener tus datos al dia.</p>
+    </div>
+
+    <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+      <div class="form-group mb-3">
+        <label for="name">Nombre</label>
+        <input
+          type="text"
+          class="form-control"
+          id="name"
+          name="name"
+          [(ngModel)]="user.name"
+          #nameCtrl="ngModel"
+          placeholder="Escribe tu nombre"
+          required
+        />
+        <small class="text-danger" *ngIf="nameCtrl.invalid && nameCtrl.touched">El nombre es obligatorio.</small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="surname">Apellido</label>
+        <input
+          type="text"
+          class="form-control"
+          id="surname"
+          name="surname"
+          [(ngModel)]="user.surname"
+          #surnameCtrl="ngModel"
+          placeholder="Escribe tu apellido"
+          required
+        />
+        <small class="text-danger" *ngIf="surnameCtrl.invalid && surnameCtrl.touched">El apellido es obligatorio.</small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="nick">Nick</label>
+        <input
+          type="text"
+          class="form-control"
+          id="nick"
+          name="nick"
+          [(ngModel)]="user.nick"
+          #nickCtrl="ngModel"
+          placeholder="Escribe tu nick"
+          required
+        />
+        <small class="text-danger" *ngIf="nickCtrl.invalid && nickCtrl.touched">El nick es obligatorio.</small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="email">Correo electronico</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          name="email"
+          [(ngModel)]="user.email"
+          #emailCtrl="ngModel"
+          placeholder="tucorreo@ejemplo.com"
+          required
+          email
+        />
+        <small class="text-danger" *ngIf="emailCtrl.invalid && emailCtrl.touched">
+          El correo electronico es obligatorio y debe ser valido.
+        </small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="image">Sube tu avatar</label>
+        <input
+          type="file"
+          class="form-control"
+          id="image"
+          name="image"
+          accept="image/*"
+          (change)="onFileSelected($event)"
+        />
+        <small class="text-muted" *ngIf="selectedImageFile">Archivo: {{ selectedImageFile.name }}</small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="currentPassword">Contrasena actual</label>
+        <div class="input-group password-group">
+          <input
+            [type]="showCurrentPassword ? 'text' : 'password'"
+            class="form-control"
+            id="currentPassword"
+            name="currentPassword"
+            [(ngModel)]="currentPassword"
+            #currentPasswordCtrl="ngModel"
+            placeholder="Ingresa tu contrasena actual"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-light password-toggle"
+            (click)="toggleCurrentPassword()"
+            [attr.aria-pressed]="showCurrentPassword"
+          >
+            {{ showCurrentPassword ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+        <small class="text-danger" *ngIf="currentPasswordCtrl.invalid && currentPasswordCtrl.touched">
+          La contrasena actual es obligatoria.
+        </small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="password">Contrasena nueva (opcional)</label>
+        <div class="input-group password-group">
+          <input
+            [type]="showNewPassword ? 'text' : 'password'"
+            class="form-control"
+            id="password"
+            name="password"
+            [(ngModel)]="user.password"
+            placeholder="Deja en blanco si no deseas cambiarla"
+          />
+          <button
+            type="button"
+            class="btn btn-outline-light password-toggle"
+            (click)="toggleNewPassword()"
+            [attr.aria-pressed]="showNewPassword"
+          >
+            {{ showNewPassword ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="alert alert-danger py-2" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+      <div class="alert alert-success py-2" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" [disabled]="!f.form.valid || loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>{{ loading ? 'Guardando...' : 'Guardar cambios' }}</span>
+      </button>
+    </form>
+  </div>
+</div>
