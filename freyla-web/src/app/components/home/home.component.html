@@ -1,15 +1,490 @@
-<section class="home-hero">
-  <div class="home-content">
-    <p class="eyebrow">Freyla</p>
-    <h1>{{ title }}</h1>
-    <p class="subtitle">
-      Conecta, comparte y descubre lo que pasa en tu comunidad. Empieza explorando el timeline o conoce a la gente.
-    </p>
-    <div class="cta-group">
-      <a class="btn btn-outline-light" routerLink="/home">Inicio</a>
-      <a class="btn btn-primary" routerLink="/timeline">Timeline</a>
-      <a class="btn btn-outline-light" routerLink="/gente">Usuarios</a>
-      <button class="btn btn-outline-light" type="button" (click)="logout()">Salir</button>
+<section class="home-shell">
+  <aside class="home-left">
+    <div class="panel profile-panel" *ngIf="identity as user">
+      <div class="profile-row">
+        <div class="profile-avatar">
+          <ng-container *ngIf="getAvatarUrl(user.image) as avatarUrl; else avatarFallback">
+            <img [src]="avatarUrl" [alt]="user.name" />
+          </ng-container>
+          <ng-template #avatarFallback>
+            <span class="bi bi-person-circle" aria-hidden="true"></span>
+          </ng-template>
+        </div>
+        <div class="profile-meta">
+          <h3>{{ user.name }} {{ user.surname }}</h3>
+          <p class="profile-nick">{{ '@' + user.nick }}</p>
+        </div>
+      </div>
+
+      <div class="profile-stats" *ngIf="stats">
+        <div>
+          <span class="stat-value">{{ stats.following }}</span>
+          <span class="stat-label">Siguiendo</span>
+        </div>
+        <div>
+          <span class="stat-value">{{ stats.followed }}</span>
+          <span class="stat-label">Seguidores</span>
+        </div>
+        <div>
+          <span class="stat-value">{{ stats.publications }}</span>
+          <span class="stat-label">Publicaciones</span>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <div class="panel nav-panel">
+      <h4>Accesos</h4>
+      <a *ngFor="let link of quickLinks" class="nav-link" [routerLink]="link.route">
+        <span class="bi" [ngClass]="link.icon"></span>
+        <span>{{ link.label }}</span>
+      </a>
+    </div>
+  </aside>
+
+  <main class="home-center">
+    <div class="feed-header">
+      <p class="eyebrow">Inicio</p>
+      <h1>{{ title }}</h1>
+      <p class="subtitle">{{ subtitle }}</p>
+    </div>
+
+    <div class="panel composer-card">
+      <form #publicationForm="ngForm" (ngSubmit)="onSubmitPublication(publicationForm)">
+        <div class="composer-row">
+          <div class="composer-avatar">
+            <ng-container *ngIf="identity && getAvatarUrl(identity.image) as avatarUrl; else composerFallback">
+              <img [src]="avatarUrl" [alt]="identity.name" />
+            </ng-container>
+            <ng-template #composerFallback>
+              <span class="bi bi-person-circle" aria-hidden="true"></span>
+            </ng-template>
+          </div>
+          <textarea
+            class="composer-input"
+            name="text"
+            [(ngModel)]="publicationText"
+            placeholder="Que estas pensando?"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="composer-media">
+          <label class="media-upload">
+            <input
+              #mediaInput
+              type="file"
+              accept="image/*,video/*"
+              (change)="onMediaSelected($event)"
+            />
+            <span class="bi bi-image" aria-hidden="true"></span>
+            <span>Foto o video</span>
+          </label>
+          <div class="media-preview" *ngIf="publicationMedia">
+            <div class="media-thumb" *ngIf="publicationMediaPreview; else videoPreview">
+              <img [src]="publicationMediaPreview" alt="Vista previa" />
+            </div>
+            <ng-template #videoPreview>
+              <span class="bi bi-play-circle" aria-hidden="true"></span>
+              <span class="media-name">{{ publicationMedia?.name }}</span>
+            </ng-template>
+            <button type="button" class="btn btn-outline-light btn-sm" (click)="clearMedia()">Quitar</button>
+          </div>
+        </div>
+        <div class="alert alert-danger py-2" *ngIf="publicationMediaError">
+          {{ publicationMediaError }}
+        </div>
+
+        <div class="composer-reactions">
+          <div class="reaction-row">
+            <button
+              type="button"
+              class="reaction-btn"
+              *ngFor="let emoji of emojiReactions"
+              (click)="addComposerReaction(emoji)"
+            >
+              {{ emoji }}
+            </button>
+          </div>
+          <div class="reaction-row sticker-row">
+            <button
+              type="button"
+              class="reaction-btn sticker-btn"
+              *ngFor="let sticker of stickerReactions"
+              (click)="addComposerReaction(sticker)"
+            >
+              {{ sticker }}
+            </button>
+          </div>
+        </div>
+
+        <div class="alert alert-danger py-2" *ngIf="publicationError">
+          {{ publicationError }}
+        </div>
+        <div class="alert alert-success py-2" *ngIf="publicationSuccess">
+          {{ publicationSuccess }}
+        </div>
+
+        <div class="composer-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="publicationForm.invalid || publicationLoading">
+            <span *ngIf="publicationLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <span>{{ publicationLoading ? 'Publicando...' : 'Publicar' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel timeline-panel">
+      <div class="timeline-header">
+        <h3>Timeline</h3>
+        <div class="timeline-actions" *ngIf="timelinePages > 1">
+          <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelinePrevPage)" [disabled]="timelinePage === 1">
+            Anterior
+          </button>
+          <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelineNextPage)" [disabled]="timelinePage === timelinePages">
+            Siguiente
+          </button>
+        </div>
+      </div>
+
+      <div class="timeline-state" *ngIf="timelineLoading">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>Cargando publicaciones...</span>
+      </div>
+      <div class="timeline-state error" *ngIf="timelineError && !timelineLoading">
+        {{ timelineError }}
+      </div>
+      <div class="timeline-state" *ngIf="!timelineLoading && !timeline.length && !timelineError">
+        Aun no hay publicaciones en tu timeline.
+      </div>
+
+      <article class="timeline-card" *ngFor="let publication of timeline">
+        <div class="timeline-user">
+          <div class="timeline-user-info">
+            <div class="timeline-avatar">
+              <ng-container *ngIf="publication.user && getAvatarUrl(publication.user.image) as avatarUrl; else timelineFallback">
+                <img [src]="avatarUrl" [alt]="publication.user.name" />
+              </ng-container>
+              <ng-template #timelineFallback>
+                <span class="bi bi-person-circle" aria-hidden="true"></span>
+              </ng-template>
+            </div>
+            <div>
+              <h4>{{ publication.user.name }} {{ publication.user.surname }}</h4>
+              <p class="timeline-nick">{{ '@' + publication.user.nick }}</p>
+            </div>
+          </div>
+
+          <div class="timeline-actions" *ngIf="isOwner(publication)">
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm"
+              (click)="startEdit(publication)"
+              [disabled]="editingId === publication._id"
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm"
+              (click)="deletePublication(publication)"
+              [disabled]="deleteLoadingId === publication._id"
+            >
+              <span
+                *ngIf="deleteLoadingId === publication._id"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Eliminar
+            </button>
+          </div>
+        </div>
+
+        <form
+          class="timeline-edit"
+          *ngIf="editingId === publication._id; else timelineText"
+          (ngSubmit)="saveEdit(publication)"
+        >
+          <textarea
+            class="timeline-edit-input"
+            [(ngModel)]="editingText"
+            name="editText-{{ publication._id }}"
+            rows="3"
+          ></textarea>
+          <div class="edit-media">
+            <label class="media-upload media-upload--compact">
+              <input type="file" accept="image/*,video/*" (change)="onEditMediaSelected($event)" />
+              <span class="bi bi-image" aria-hidden="true"></span>
+              <span>Foto o video</span>
+            </label>
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm"
+              *ngIf="editMediaFile"
+              (click)="clearEditMediaSelection()"
+            >
+              Quitar nuevo
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm"
+              *ngIf="!editMediaFile && publication.file && !editRemoveFile"
+              (click)="markRemoveFile()"
+            >
+              Quitar archivo
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm"
+              *ngIf="editRemoveFile"
+              (click)="undoRemoveFile()"
+            >
+              Deshacer
+            </button>
+          </div>
+          <div class="edit-media-preview" *ngIf="editMediaFile || publication.file || editRemoveFile">
+            <ng-container *ngIf="editMediaFile; else currentMedia">
+              <ng-container *ngIf="editMediaPreview; else editVideoPreview">
+                <img class="edit-media-full" [src]="editMediaPreview" alt="Vista previa" />
+              </ng-container>
+              <ng-template #editVideoPreview>
+                <span class="bi bi-play-circle" aria-hidden="true"></span>
+                <span class="media-name">{{ editMediaFile?.name }}</span>
+              </ng-template>
+            </ng-container>
+            <ng-template #currentMedia>
+              <div class="edit-media-notice" *ngIf="editRemoveFile">
+                El archivo se eliminara al guardar.
+              </div>
+              <ng-container *ngIf="publication.file && !editRemoveFile">
+                <ng-container *ngIf="isVideoFile(publication.file); else editImage">
+                  <video [src]="getPublicationMediaUrl(publication.file)" controls></video>
+                </ng-container>
+                <ng-template #editImage>
+                  <img [src]="getPublicationMediaUrl(publication.file)" alt="Archivo actual" />
+                </ng-template>
+              </ng-container>
+            </ng-template>
+          </div>
+          <div class="alert alert-danger py-2" *ngIf="editMediaError">
+            {{ editMediaError }}
+          </div>
+          <div class="alert alert-danger py-2" *ngIf="editError">
+            {{ editError }}
+          </div>
+          <div class="timeline-edit-actions">
+            <button type="submit" class="btn btn-primary btn-sm" [disabled]="editLoading">
+              <span *ngIf="editLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Guardar
+            </button>
+            <button type="button" class="btn btn-outline-light btn-sm" (click)="cancelEdit()">Cancelar</button>
+          </div>
+        </form>
+
+        <ng-template #timelineText>
+          <p class="timeline-text">{{ publication.text }}</p>
+        </ng-template>
+
+        <div class="timeline-media" *ngIf="publication.file && editingId !== publication._id">
+          <ng-container *ngIf="isVideoFile(publication.file); else imageMedia">
+            <video [src]="getPublicationMediaUrl(publication.file)" controls></video>
+          </ng-container>
+          <ng-template #imageMedia>
+            <img [src]="getPublicationMediaUrl(publication.file)" alt="Publicacion" />
+          </ng-template>
+        </div>
+
+        <div class="shared-card" *ngIf="getSharedPublication(publication) as shared">
+          <p class="shared-label">Compartio una publicacion</p>
+          <div class="shared-body">
+            <div class="shared-user">
+              <div class="shared-avatar">
+                <ng-container *ngIf="getAvatarUrl(shared.user.image) as avatarUrl; else sharedFallback">
+                  <img [src]="avatarUrl" [alt]="shared.user.name" />
+                </ng-container>
+                <ng-template #sharedFallback>
+                  <span class="bi bi-person-circle" aria-hidden="true"></span>
+                </ng-template>
+              </div>
+              <div>
+                <h5>{{ shared.user.name }} {{ shared.user.surname }}</h5>
+                <p class="shared-nick">{{ '@' + shared.user.nick }}</p>
+              </div>
+            </div>
+            <p class="shared-text">{{ shared.text }}</p>
+            <div class="shared-media" *ngIf="shared.file as sharedFile">
+              <ng-container *ngIf="isVideoFile(sharedFile); else sharedImageMedia">
+                <video [src]="getPublicationMediaUrl(sharedFile)" controls></video>
+              </ng-container>
+              <ng-template #sharedImageMedia>
+                <img [src]="getPublicationMediaUrl(sharedFile)" alt="Publicacion compartida" />
+              </ng-template>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-meta">
+          <div class="reaction-summary" *ngIf="getReactionSummary(publication).length">
+            <span class="reaction-pill" *ngFor="let reaction of getReactionSummary(publication)">
+              <span class="reaction-icon">{{ reaction.value }}</span>
+              <span class="reaction-count">{{ reaction.count }}</span>
+            </span>
+          </div>
+
+          <div class="timeline-actions">
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm reaction-toggle"
+              (click)="toggleReactions(publication._id)"
+              [disabled]="reactionLoadingId === publication._id"
+            >
+              Reaccionar
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm"
+              (click)="sharePublication(publication)"
+              [disabled]="shareLoadingId === publication._id"
+            >
+              <span
+                *ngIf="shareLoadingId === publication._id"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Compartir
+            </button>
+          </div>
+        </div>
+
+        <div class="reaction-picker" *ngIf="openReactionId === publication._id">
+          <div class="reaction-row">
+            <button
+              type="button"
+              class="reaction-btn"
+              *ngFor="let emoji of emojiReactions"
+              (click)="reactToPublication(publication, 'emoji', emoji)"
+              [class.active]="isReactionActive(publication, 'emoji', emoji)"
+            >
+              {{ emoji }}
+            </button>
+          </div>
+          <div class="reaction-row sticker-row">
+            <button
+              type="button"
+              class="reaction-btn sticker-btn"
+              *ngFor="let sticker of stickerReactions"
+              (click)="reactToPublication(publication, 'sticker', sticker)"
+              [class.active]="isReactionActive(publication, 'sticker', sticker)"
+            >
+              {{ sticker }}
+            </button>
+          </div>
+        </div>
+
+        <div class="comments-block">
+          <div class="comment-item" *ngFor="let comment of publication.comments ?? []">
+            <div class="comment-avatar">
+              <ng-container *ngIf="getCommentUser(comment) as commentUser; else commentFallback">
+                <ng-container *ngIf="getAvatarUrl(commentUser.image) as avatarUrl; else commentFallback">
+                  <img [src]="avatarUrl" [alt]="commentUser.name" />
+                </ng-container>
+              </ng-container>
+              <ng-template #commentFallback>
+                <span class="bi bi-person-circle" aria-hidden="true"></span>
+              </ng-template>
+            </div>
+            <div class="comment-body">
+              <div class="comment-header">
+                <span class="comment-name" *ngIf="getCommentUser(comment) as commentUser">
+                  {{ commentUser.name }} {{ commentUser.surname }}
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-outline-light btn-sm"
+                  *ngIf="isCommentOwner(comment)"
+                  (click)="deleteComment(publication, comment)"
+                  [disabled]="deleteCommentLoadingId === comment._id"
+                >
+                  <span
+                    *ngIf="deleteCommentLoadingId === comment._id"
+                    class="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Eliminar
+                </button>
+              </div>
+              <p class="comment-text">{{ comment.text }}</p>
+            </div>
+          </div>
+
+          <form class="comment-form" (ngSubmit)="addComment(publication)">
+            <input
+              class="comment-input"
+              type="text"
+              name="comment-{{ publication._id }}"
+              [(ngModel)]="commentText[publication._id!]"
+              placeholder="Escribe un comentario..."
+              required
+            />
+            <button
+              type="submit"
+              class="btn btn-primary btn-sm"
+              [disabled]="commentLoadingId === publication._id"
+            >
+              <span
+                *ngIf="commentLoadingId === publication._id"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Comentar
+            </button>
+          </form>
+          <div class="alert alert-danger py-2" *ngIf="commentError[publication._id!]">
+            {{ commentError[publication._id!] }}
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <aside class="home-right">
+    <div class="panel trends-panel">
+      <h4>Tendencias</h4>
+      <div class="trend-item" *ngFor="let trend of trends">
+        <span class="trend-tag">{{ trend.tag }}</span>
+        <span class="trend-posts">{{ trend.posts }} publicaciones</span>
+      </div>
+    </div>
+
+    <div class="panel contacts-panel">
+      <h4>Contactos</h4>
+      <div class="contacts-state" *ngIf="contactsLoading">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>Cargando contactos...</span>
+      </div>
+      <div class="contacts-state error" *ngIf="contactsError && !contactsLoading">
+        {{ contactsError }}
+      </div>
+      <div class="contacts-state" *ngIf="!contactsLoading && !followingContacts.length && !contactsError">
+        No hay contactos para mostrar.
+      </div>
+      <div class="contacts-list" *ngIf="!contactsLoading && followingContacts.length">
+        <div class="contact-item" *ngFor="let contact of followingContacts">
+          <div class="contact-avatar">
+            <ng-container *ngIf="getAvatarUrl(contact.image) as avatarUrl; else contactFallback">
+              <img [src]="avatarUrl" [alt]="contact.name" />
+            </ng-container>
+            <ng-template #contactFallback>
+              <span class="bi bi-person-circle" aria-hidden="true"></span>
+            </ng-template>
+            <span class="contact-dot" [class.online]="isContactOnline(contact)"></span>
+          </div>
+          <span class="contact-name">{{ contact.name }} {{ contact.surname }}</span>
+        </div>
+      </div>
+    </div>
+  </aside>
 </section>

@@ -2,6 +2,7 @@
 
 const jwt = require("jwt-simple");
 const moment = require("moment");
+const User = require("../models/user");
 const secret = "clave_secreta_curso_freyla";
 
 exports.ensureAuth = function (req, res, next) {
@@ -31,6 +32,8 @@ exports.ensureAuth = function (req, res, next) {
   }
 
   req.user = payload;  // <--- Aquí va a req, no a res
+
+  User.updateOne({ _id: payload.sub }, { lastActive: new Date() }).catch(() => {});
 
   next();
 };

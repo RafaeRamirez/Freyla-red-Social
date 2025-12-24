@@ -7,6 +7,7 @@ import { UserService } from '../../services/user.service';
 import { global } from '../../services/global';
 
 type Identity = User & { id?: string; sub?: string };
+type Stats = { following: number; followed: number; publications: number };
 
 @Component({
   selector: 'app-users',
@@ -27,6 +28,9 @@ export class UsersComponent implements OnInit {
   public errorMessage = '';
   public followingIds: string[] = [];
   public followLoadingId: string | null = null;
+  public userStats: Record<string, Stats> = {};
+  public statsLoading: Record<string, boolean> = {};
+  public statsError: Record<string, string> = {};
 
   constructor(
     private route: ActivatedRoute,
@@ -70,6 +74,8 @@ export class UsersComponent implements OnInit {
         this.total = resp?.total ?? this.users.length;
         this.pages = resp?.pages ?? 1;
         this.page = resp?.page ?? page;
+        this.resetUserStats();
+        this.loadUsersStats(this.users);
       },
       error: (err) => {
         this.loading = false;
@@ -77,6 +83,7 @@ export class UsersComponent implements OnInit {
         this.followingIds = [];
         this.total = 0;
         this.pages = 1;
+        this.resetUserStats();
 
         const status = err?.status;
         if (status === 404 && page > 1) {
@@ -119,6 +126,7 @@ export class UsersComponent implements OnInit {
         if (!this.followingIds.includes(userId)) {
           this.followingIds = [...this.followingIds, userId];
         }
+        this.loadUserStats(userId);
       },
       error: (err) => {
         this.errorMessage = err?.error?.message || 'No se pudo seguir al usuario.';
@@ -139,6 +147,7 @@ export class UsersComponent implements OnInit {
     this.followService.deleteFollow(userId, token).subscribe({
       next: () => {
         this.followingIds = this.followingIds.filter((id) => id !== userId);
+        this.loadUserStats(userId);
       },
       error: (err) => {
         this.errorMessage = err?.error?.message || 'No se pudo dejar de seguir.';
@@ -155,6 +164,53 @@ export class UsersComponent implements OnInit {
 
   get nextPage(): number {
     return this.page < this.pages ? this.page + 1 : this.pages;
+  }
+
+  getStatValue(userId: string | undefined, key: keyof Stats): string | number {
+    if (!userId) {
+      return '--';
+    }
+    const stats = this.userStats[userId];
+    if (stats) {
+      return stats[key];
+    }
+    if (this.statsLoading[userId]) {
+      return '...';
+    }
+    return '--';
+  }
+
+  private resetUserStats(): void {
+    this.userStats = {};
+    this.statsLoading = {};
+    this.statsError = {};
+  }
+
+  private loadUsersStats(users: User[]): void {
+    users.forEach((user) => {
+      const userId = user._id;
+      if (userId) {
+        this.loadUserStats(userId);
+      }
+    });
+  }
+
+  private loadUserStats(userId: string): void {
+    this.statsLoading[userId] = true;
+    this.statsError[userId] = '';
+
+    this.userService.getCounters(userId).subscribe({
+      next: (stats) => {
+        this.userStats[userId] = stats;
+      },
+      error: (err) => {
+        this.statsError[userId] = err?.error?.message || 'No se pudieron cargar las estadisticas.';
+        this.statsLoading[userId] = false;
+      },
+      complete: () => {
+        this.statsLoading[userId] = false;
+      },
+    });
   }
 
   private getIdentityId(identity: Identity | null): string | null {

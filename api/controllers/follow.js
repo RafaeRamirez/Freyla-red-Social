@@ -58,7 +58,7 @@ async function getFollowingUsers(req, res) {
     const options = {
       page,
       limit: itemsPerPage,
-      populate: { path: 'followed', select: 'name username email' },
+      populate: { path: 'followed', select: 'name surname nick email image lastActive' },
       sort: { _id: -1 }
     };
 
@@ -88,7 +88,7 @@ async function getFollowedUsers(req, res) {
       limit: itemsPerPage,
       populate: {
         path: 'user',
-        select: 'name username email'
+        select: 'name surname nick email image lastActive'
       },
       sort: { _id: -1 }
     };
@@ -121,7 +121,7 @@ async function getMyFollows(req, res) {
   try {
     const userId = req.user.sub;
     const follows = await Follow.find({ user: userId })
-      .populate('followed', 'name username email')
+      .populate('followed', 'name surname nick email image lastActive')
       .exec();
 
     return res.status(200).send({ follows });
@@ -135,7 +135,7 @@ async function getYouFollowMe(req, res) {
   try {
     const userId = req.user.sub;
     const follows = await Follow.find({ followed: userId })
-      .populate('user', 'name username email')
+      .populate('user', 'name surname nick email image lastActive')
       .exec();
 
     return res.status(200).send({ follows });

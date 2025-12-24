@@ -48,6 +48,21 @@
           Siguiendo
         </button>
       </div>
+
+      <div class="user-stats">
+        <div class="user-stat">
+          <span class="stat-value">{{ getStatValue(user._id, 'following') }}</span>
+          <span class="stat-label">Siguiendo</span>
+        </div>
+        <div class="user-stat">
+          <span class="stat-value">{{ getStatValue(user._id, 'followed') }}</span>
+          <span class="stat-label">Seguidores</span>
+        </div>
+        <div class="user-stat">
+          <span class="stat-value">{{ getStatValue(user._id, 'publications') }}</span>
+          <span class="stat-label">Publicaciones</span>
+        </div>
+      </div>
     </article>
   </div>
 
@@ -64,18 +79,8 @@
   </ng-template>
 
   <div class="pagination" *ngIf="pages > 1">
-    <a
-      class="page-link"
-      [routerLink]="['/gente', prevPage]"
-      [class.disabled]="page === 1"
-      >Anterior</a
-    >
+    <a class="page-link" [routerLink]="['/gente', prevPage]" [class.disabled]="page === 1">Anterior</a>
     <span class="page-info">Pagina {{ page }} de {{ pages }}</span>
-    <a
-      class="page-link"
-      [routerLink]="['/gente', nextPage]"
-      [class.disabled]="page === pages"
-      >Siguiente</a
-    >
+    <a class="page-link" [routerLink]="['/gente', nextPage]" [class.disabled]="page === pages">Siguiente</a>
   </div>
 </section>

@@ -12,6 +12,7 @@ const UserSchema = new Schema({
     password: String,
     role: { type: String, default: 'ROLE_USER' },
     image: String,
+    lastActive: { type: Date, default: null },
 }, {
     timestamps: true // opcional: agrega createdAt y updatedAt automáticamente
 });

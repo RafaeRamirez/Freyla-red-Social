@@ -33,6 +33,13 @@ function pruebas(req, res) {
 }
 
 // ========================
+// PING PARA PRESENCIA
+// ========================
+function ping(req, res) {
+  return res.status(200).send({ ok: true, timestamp: Date.now() });
+}
+
+// ========================
 // REGISTRAR USUARIO
 // ========================
 async function saveUser(req, res) {
@@ -352,6 +359,7 @@ function getImageFile(req, res) {
 module.exports = {
   home,
   pruebas,
+  ping,
   saveUser,
   loginUser,
   getUser,

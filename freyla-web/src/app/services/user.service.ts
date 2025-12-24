@@ -130,6 +130,13 @@ export class UserService {
     localStorage.removeItem('stats');
   }
 
+  ping(token: string): Observable<{ ok: boolean; timestamp: number }> {
+    return this.http.get<{ ok: boolean; timestamp: number }>(
+      `${this.apiUrl}/ping`,
+      this.authHeaders(token)
+    );
+  }
+
   private authHeaders(token: string) {
     return {
       headers: new HttpHeaders({

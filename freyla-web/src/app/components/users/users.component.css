@@ -49,9 +49,9 @@
   border-radius: 16px;
   padding: 1.5rem;
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
+  grid-template-columns: 72px minmax(0, 1fr);
   gap: 1rem;
-  align-items: center;
+  align-items: start;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -87,7 +87,12 @@
   font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.user-info {
+  min-width: 0;
 }
 
 .user-nick {
@@ -95,7 +100,8 @@
   color: rgba(232, 236, 245, 0.75);
   font-weight: 600;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .user-email {
@@ -103,11 +109,46 @@
   font-size: 0.9rem;
   color: rgba(232, 236, 245, 0.6);
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.user-stats {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.user-stat {
+  padding: 0.45rem 0.35rem;
+  border-radius: 12px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-label {
+  font-size: 0.62rem;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: rgba(232, 236, 245, 0.6);
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .user-meta {
+  grid-column: 1 / -1;
   justify-self: end;
+  margin-top: 0.15rem;
 }
 
 .follow-btn {

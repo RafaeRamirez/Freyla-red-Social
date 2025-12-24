@@ -9,6 +9,7 @@ export class User {
   image?: string;
   createdAt?: string;
   updatedAt?: string;
+  lastActive?: string;
 
   constructor(
     name: string,
@@ -20,7 +21,8 @@ export class User {
     image?: string,
     _id?: string,
     createdAt?: string,
-    updatedAt?: string
+    updatedAt?: string,
+    lastActive?: string
   ) {
     this.name = name;
     this.surname = surname;
@@ -32,5 +34,6 @@ export class User {
     this._id = _id;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+    this.lastActive = lastActive;
   }
 }

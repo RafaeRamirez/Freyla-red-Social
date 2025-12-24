@@ -1,0 +1,133 @@
+<aside class="sidebar">
+  <div class="sidebar-card" *ngIf="displayUser as user; else emptyState">
+    <div class="sidebar-heading">
+      <p class="eyebrow">Perfil</p>
+      <h2 *ngIf="mode === 'self'; else userTitle">Hola, {{ user.name }}</h2>
+      <ng-template #userTitle>
+        <h2>{{ user.name }} {{ user.surname }}</h2>
+      </ng-template>
+      <p class="subtitle">
+        {{ mode === 'self' ? 'Tu espacio personal en Freyla.' : 'Conoce su perfil en Freyla.' }}
+      </p>
+    </div>
+
+    <div class="profile">
+      <div class="profile-avatar">
+        <ng-container *ngIf="getAvatarUrl(user.image) as avatarUrl; else avatarFallback">
+          <img [src]="avatarUrl" [alt]="user.name" />
+        </ng-container>
+        <ng-template #avatarFallback>
+          <span class="bi bi-person-circle" aria-hidden="true"></span>
+        </ng-template>
+      </div>
+      <div class="profile-info">
+        <h3>{{ user.name }} {{ user.surname }}</h3>
+        <p class="profile-nick">{{ '@' + user.nick }}</p>
+        <p class="profile-email">{{ user.email }}</p>
+      </div>
+    </div>
+
+    <div class="alert alert-danger py-2" *ngIf="displayStatus">
+      {{ displayStatus }}
+    </div>
+
+    <div class="stats-grid following-data" *ngIf="displayStats; else statsState">
+      <a class="stat-card" href="#" (click)="$event.preventDefault()">
+        <span class="number-stats stat-value">{{ displayStats.following }}</span>
+        <span class="label-stats stat-label">Siguiendo</span>
+      </a>
+      <a class="stat-card" href="#" (click)="$event.preventDefault()">
+        <span class="number-stats stat-value">{{ displayStats.followed }}</span>
+        <span class="label-stats stat-label">Seguidores</span>
+      </a>
+      <a class="stat-card" href="#" (click)="$event.preventDefault()">
+        <span class="number-stats stat-value">{{ displayStats.publications }}</span>
+        <span class="label-stats stat-label">Publicaciones</span>
+      </a>
+    </div>
+
+    <ng-template #statsState>
+      <div class="stats-state">
+        <div *ngIf="displayLoading" class="stats-loading">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          <span>Cargando estadisticas...</span>
+        </div>
+        <div *ngIf="!displayLoading" class="stats-empty">
+          <span>Sin estadisticas para mostrar.</span>
+        </div>
+      </div>
+    </ng-template>
+
+    <div id="new-publication" class="publication-card post-form" *ngIf="showActions && publication as pub">
+      <h3 class="publication-title">Crear publicacion</h3>
+      <form #pubForm="ngForm" (ngSubmit)="onSubmitPublication(pubForm)">
+        <textarea
+          class="publication-text"
+          name="text"
+          [(ngModel)]="pub.text"
+          placeholder="Comparte algo con tu comunidad..."
+          rows="3"
+        ></textarea>
+
+        <div class="publication-media">
+          <label class="media-upload">
+            <input
+              #sidebarMediaInput
+              type="file"
+              accept="image/*,video/*"
+              (change)="onMediaSelected($event)"
+            />
+            <span class="bi bi-image" aria-hidden="true"></span>
+            <span>Foto o video</span>
+          </label>
+          <div class="media-preview" *ngIf="publicationMedia">
+            <div class="media-thumb" *ngIf="publicationMediaPreview; else videoPreview">
+              <img [src]="publicationMediaPreview" alt="Vista previa" />
+            </div>
+            <ng-template #videoPreview>
+              <span class="bi bi-play-circle" aria-hidden="true"></span>
+              <span class="media-name">{{ publicationMedia?.name }}</span>
+            </ng-template>
+            <button type="button" class="btn btn-outline-light btn-sm" (click)="clearMedia()">Quitar</button>
+          </div>
+        </div>
+        <div class="alert alert-danger py-2" *ngIf="publicationMediaError">
+          {{ publicationMediaError }}
+        </div>
+
+        <div class="alert alert-danger py-2" *ngIf="publicationError">
+          {{ publicationError }}
+        </div>
+        <div class="alert alert-success py-2" *ngIf="publicationMessage">
+          {{ publicationMessage }}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" [disabled]="pubForm.invalid || publicationLoading">
+          <span *ngIf="publicationLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <span>{{ publicationLoading ? 'Publicando...' : 'Publicar' }}</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="sidebar-actions" *ngIf="showActions">
+      <a class="btn btn-outline-light" routerLink="/home">Mi perfil</a>
+      <a class="btn btn-primary" routerLink="/mis-datos">Editar perfil</a>
+      <a class="btn btn-outline-light" routerLink="/gente">Buscar gente</a>
+      <button type="button" class="btn btn-outline-light" (click)="logout()">Cerrar sesion</button>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="sidebar-card">
+      <div class="sidebar-heading">
+        <p class="eyebrow">Freyla</p>
+        <h2>{{ emptyTitle }}</h2>
+        <p class="subtitle">{{ emptySubtitle }}</p>
+      </div>
+      <div class="sidebar-actions" *ngIf="showActions">
+        <a class="btn btn-primary" routerLink="/login">Iniciar sesion</a>
+        <a class="btn btn-outline-light" routerLink="/registro">Crear cuenta</a>
+      </div>
+    </div>
+  </ng-template>
+</aside>

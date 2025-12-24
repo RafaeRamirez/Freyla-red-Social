@@ -25,6 +25,7 @@ const api = express.Router();
 // Rutas públicas
 api.get("/home", UserController.home);
 api.get("/pruebas", md_auth.ensureAuth, UserController.pruebas);
+api.get("/ping", md_auth.ensureAuth, UserController.ping);
 api.post("/register", UserController.saveUser);
 api.post("/login", UserController.loginUser);
 api.get("/user/:id", md_auth.ensureAuth, UserController.getUser);
