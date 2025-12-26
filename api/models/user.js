@@ -12,6 +12,7 @@ const UserSchema = new Schema({
     password: String,
     role: { type: String, default: 'ROLE_USER' },
     image: String,
+    cover: String,
     lastActive: { type: Date, default: null },
     preferences: {
         tags: [{ value: String, score: Number }],

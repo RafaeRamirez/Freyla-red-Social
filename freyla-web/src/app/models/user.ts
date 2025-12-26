@@ -7,6 +7,7 @@ export class User {
   password?: string;
   role: string;
   image?: string;
+  cover?: string;
   createdAt?: string;
   updatedAt?: string;
   lastActive?: string;
@@ -19,6 +20,7 @@ export class User {
     password?: string,
     role: string = 'ROLE_USER',
     image?: string,
+    cover?: string,
     _id?: string,
     createdAt?: string,
     updatedAt?: string,
@@ -31,6 +33,7 @@ export class User {
     this.password = password;
     this.role = role;
     this.image = image;
+    this.cover = cover;
     this._id = _id;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;

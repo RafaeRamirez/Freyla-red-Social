@@ -37,6 +37,7 @@ api.get("/get-image-user/:imageFile",UserController.getImageFile);
 
 // Ruta para subir imagen con Multer
 api.post("/update-image-user/:id", [md_auth.ensureAuth, upload.single("image")], UserController.uploadImage);
+api.post("/update-cover-user/:id", [md_auth.ensureAuth, upload.single("cover")], UserController.uploadCover);
 
 // Exportar el router
 module.exports = api;

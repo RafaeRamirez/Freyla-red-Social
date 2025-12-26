@@ -25,6 +25,16 @@ export class UserService {
     return this.http.get<User>(`${this.apiUrl}/user/${id}`, this.authHeaders(token));
   }
 
+  getUserProfile(
+    id: string,
+    token: string
+  ): Observable<{ user: User; following: unknown; followed: unknown }> {
+    return this.http.get<{ user: User; following: unknown; followed: unknown }>(
+      `${this.apiUrl}/user/${id}`,
+      this.authHeaders(token)
+    );
+  }
+
   updateUser(
     id: string,
     data: Partial<User> & { currentPassword?: string },
@@ -38,6 +48,16 @@ export class UserService {
     formData.append('image', file, file.name);
     return this.http.post<{ user: User }>(
       `${this.apiUrl}/update-image-user/${id}`,
+      formData,
+      this.authHeaders(token)
+    );
+  }
+
+  updateUserCover(id: string, file: File, token: string): Observable<{ user: User }> {
+    const formData = new FormData();
+    formData.append('cover', file, file.name);
+    return this.http.post<{ user: User }>(
+      `${this.apiUrl}/update-cover-user/${id}`,
       formData,
       this.authHeaders(token)
     );

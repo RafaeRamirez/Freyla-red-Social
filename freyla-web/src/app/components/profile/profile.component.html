@@ -1,0 +1,174 @@
+<section class="profile-page">
+  <div class="profile-card" *ngIf="profileUser as user; else profileState">
+    <div
+      class="profile-cover"
+      [style.--cover-url]="user.cover ? 'url(' + getCoverUrl(user.cover) + ')' : 'none'"
+    >
+      <div class="profile-cover-glow"></div>
+      <button
+        type="button"
+        class="profile-cover-btn"
+        *ngIf="isSelf"
+        (click)="openCoverPicker()"
+        [disabled]="coverLoading"
+      >
+        {{ coverLoading ? 'Subiendo...' : 'Editar portada' }}
+      </button>
+      <input
+        #coverInput
+        type="file"
+        accept="image/*"
+        hidden
+        (change)="onCoverSelected($event)"
+      />
+    </div>
+
+    <div class="profile-header">
+      <div class="profile-avatar">
+        <ng-container *ngIf="getAvatarUrl(user.image) as avatarUrl; else avatarFallback">
+          <img [src]="avatarUrl" [alt]="user.name" />
+        </ng-container>
+        <ng-template #avatarFallback>
+          <span class="bi bi-person-circle" aria-hidden="true"></span>
+        </ng-template>
+      </div>
+      <div class="profile-header-main">
+        <div class="profile-meta">
+          <h1>{{ user.name }} {{ user.surname }}</h1>
+          <p class="profile-nick">{{ '@' + user.nick }}</p>
+          <p class="profile-email">{{ user.email }}</p>
+        </div>
+        <div class="profile-actions">
+          <button
+            class="btn btn-outline-light"
+            type="button"
+            *ngIf="!isSelf"
+            (click)="toggleFollow()"
+            [disabled]="followLoading"
+          >
+            {{ isFollowing ? 'Siguiendo' : 'Seguir' }}
+          </button>
+          <a class="btn btn-light" *ngIf="isSelf" routerLink="/mis-datos">Editar perfil</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-stats" *ngIf="profileStats">
+      <div>
+        <span class="stat-value">{{ profileStats.following }}</span>
+        <span class="stat-label">Siguiendo</span>
+      </div>
+      <div>
+        <span class="stat-value">{{ profileStats.followed }}</span>
+        <span class="stat-label">Seguidores</span>
+      </div>
+      <div>
+        <span class="stat-value">{{ profileStats.publications }}</span>
+        <span class="stat-label">Publicaciones</span>
+      </div>
+    </div>
+
+    <div class="profile-state error" *ngIf="coverError">{{ coverError }}</div>
+
+    <div class="profile-tabs">
+      <button
+        type="button"
+        class="profile-tab"
+        [class.active]="activeTab === 'publicaciones'"
+        (click)="setActiveTab('publicaciones')"
+      >
+        Publicaciones
+      </button>
+      <button
+        type="button"
+        class="profile-tab"
+        [class.active]="activeTab === 'reels'"
+        (click)="setActiveTab('reels')"
+      >
+        Reels
+      </button>
+      <button
+        type="button"
+        class="profile-tab"
+        [class.active]="activeTab === 'fotos'"
+        (click)="setActiveTab('fotos')"
+      >
+        Fotos
+      </button>
+      <button
+        type="button"
+        class="profile-tab"
+        [class.active]="activeTab === 'detalles'"
+        (click)="setActiveTab('detalles')"
+      >
+        Detalles
+      </button>
+    </div>
+
+    <section class="profile-content">
+      <div class="profile-state" *ngIf="publicationsLoading">Cargando publicaciones...</div>
+      <div class="profile-state error" *ngIf="publicationsError && !publicationsLoading">
+        {{ publicationsError }}
+      </div>
+
+      <ng-container *ngIf="activeTab !== 'detalles'">
+        <div class="profile-state" *ngIf="!publicationsLoading && !filteredPublications.length && !publicationsError">
+          No hay publicaciones para mostrar.
+        </div>
+
+        <div class="profile-grid" *ngIf="!publicationsLoading && filteredPublications.length">
+          <article class="profile-post" *ngFor="let publication of filteredPublications">
+            <div class="profile-post-media" *ngIf="publication.file">
+              <ng-container *ngIf="isVideoFile(publication.file); else photoMedia">
+                <video [src]="getPublicationMediaUrl(publication.file)" controls></video>
+              </ng-container>
+              <ng-template #photoMedia>
+                <img [src]="getPublicationMediaUrl(publication.file)" alt="Publicacion" />
+              </ng-template>
+            </div>
+            <p class="profile-post-text" *ngIf="publication.text">{{ publication.text }}</p>
+          </article>
+        </div>
+
+        <div class="profile-pagination" *ngIf="!publicationsLoading && publicationsPages > 1">
+          <button
+            class="btn btn-outline-light btn-sm"
+            type="button"
+            (click)="loadPublications(user._id || '', publicationsPrevPage)"
+            [disabled]="publicationsPage === 1"
+          >
+            Anterior
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            type="button"
+            (click)="loadPublications(user._id || '', publicationsNextPage)"
+            [disabled]="publicationsPage === publicationsPages"
+          >
+            Siguiente
+          </button>
+        </div>
+      </ng-container>
+
+      <div class="profile-details" *ngIf="activeTab === 'detalles' && profileUser as user">
+        <div class="detail-row">
+          <span>Nombre</span>
+          <strong>{{ user.name }} {{ user.surname }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Usuario</span>
+          <strong>{{ '@' + user.nick }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Email</span>
+          <strong>{{ user.email }}</strong>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <ng-template #profileState>
+    <div class="profile-state" *ngIf="loading">Cargando perfil...</div>
+    <div class="profile-state error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  </ng-template>
+</section>

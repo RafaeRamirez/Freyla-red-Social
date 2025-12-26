@@ -110,6 +110,24 @@ export class PublicationService {
     }>(`${this.apiUrl}/publications-personalized/${page}`, this.authHeaders(token));
   }
 
+  getUserPublications(
+    userId: string,
+    page: number,
+    token: string
+  ): Observable<{
+    total_items: number;
+    pages: number;
+    page: number;
+    publications: Publication[];
+  }> {
+    return this.http.get<{
+      total_items: number;
+      pages: number;
+      page: number;
+      publications: Publication[];
+    }>(`${this.apiUrl}/publications-user/${userId}/${page}`, this.authHeaders(token));
+  }
+
   private authHeaders(token: string) {
     return {
       headers: new HttpHeaders({

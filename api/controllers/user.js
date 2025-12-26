@@ -338,6 +338,34 @@ async function uploadImage(req, res) {
 }
 
 // ========================
+// SUBIR PORTADA
+// ========================
+async function uploadCover(req, res) {
+  const userId = req.params.id;
+
+  if (!req.file) return res.status(400).send({ message: "No se ha subido ninguna imagen" });
+
+  const file_path = req.file.path;
+  const file_name = path.basename(file_path);
+  const file_ext = path.extname(file_path).toLowerCase().replace(".", "");
+  const allowedExtensions = ["png", "jpg", "jpeg", "gif", "webp"];
+
+  try {
+    if (userId !== req.user.sub) return removeFilesOfUploads(res, file_path, "No tienes permiso para actualizar la portada");
+
+    if (!allowedExtensions.includes(file_ext)) return removeFilesOfUploads(res, file_path, "Extension no valida");
+
+    const userUpdated = await User.findByIdAndUpdate(userId, { cover: file_name }, { new: true }).select("-password");
+
+    if (!userUpdated) return res.status(404).send({ message: "No se ha podido actualizar el usuario" });
+
+    return res.status(200).send({ user: userUpdated });
+  } catch (error) {
+    return res.status(500).send({ message: "Error en el servidor al subir la portada.", error: error.message });
+  }
+}
+
+// ========================
 // MOSTRAR IMAGEN
 // ========================
 function getImageFile(req, res) {
@@ -366,6 +394,7 @@ module.exports = {
   getUsers,
   updateUser,
   uploadImage,
+  uploadCover,
   getImageFile,
   getCounters,
 };
