@@ -57,6 +57,148 @@
           </ul>
 
           <ul class="navbar-nav ms-auto nav-user-menu">
+            <li class="nav-item nav-chat" *ngIf="isLogged">
+              <button class="chatBtn" type="button" (click)="toggleChats()" aria-label="Mensajes">
+                <span class="chatIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M21 14a4 4 0 0 1-4 4H9l-4 3v-3H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v7Z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+              </button>
+              <div class="chatDropdown" *ngIf="chatsOpen">
+                <div class="chatDropdownHead">
+                  <span>Chats</span>
+                  <button type="button" class="chatClose" (click)="closeChats()">X</button>
+                </div>
+                <label class="chatSearch" aria-label="Buscar contacto">
+                  <span class="bi bi-search" aria-hidden="true"></span>
+                  <input
+                    type="text"
+                    name="chatSearch"
+                    [(ngModel)]="chatSearch"
+                    placeholder="Buscar en Messenger"
+                    autocomplete="off"
+                    (keyup.enter)="trackChatSearch()"
+                    (blur)="trackChatSearch()"
+                  />
+                </label>
+                <div class="chatDropdownEmpty" *ngIf="chatsLoading">Cargando contactos...</div>
+                <div class="chatDropdownEmpty" *ngIf="chatsError && !chatsLoading">{{ chatsError }}</div>
+                <div class="chatDropdownEmpty" *ngIf="!chatsLoading && !filteredChatContacts.length && !chatsError">
+                  No hay contactos para mostrar.
+                </div>
+                <div class="chatDropdownList" *ngIf="!chatsLoading && filteredChatContacts.length">
+                  <button
+                    type="button"
+                    class="chatDropdownItem"
+                    *ngFor="let contact of filteredChatContacts"
+                    (click)="selectChat(contact)"
+                  >
+                    <div class="chatAvatar">
+                      <ng-container *ngIf="getAvatarUrl(contact.image) as avatarUrl; else chatFallback">
+                        <img [src]="avatarUrl" [alt]="contact.name" />
+                      </ng-container>
+                      <ng-template #chatFallback>
+                        <span class="bi bi-person-fill" aria-hidden="true"></span>
+                      </ng-template>
+                    </div>
+                    <div class="chatMeta">
+                      <span class="chatName">{{ contact.name }} {{ contact.surname }}</span>
+                      <span class="chatNick" *ngIf="contact.nick">{{ '@' + contact.nick }}</span>
+                    </div>
+                  </button>
+                </div>
+                <div class="chatDropdownFooter">
+                  <button type="button" class="chatLink" (click)="closeChats()">Cerrar</button>
+                </div>
+              </div>
+            </li>
+            <li class="nav-item nav-notif" *ngIf="isLogged">
+              <button class="notifBtn" type="button" (click)="toggleNotifications()" aria-label="Notificaciones">
+                <span class="notifIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                    />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" />
+                  </svg>
+                </span>
+                <span class="notifBadge" *ngIf="unviewedCount > 0">{{ unviewedCount }}</span>
+              </button>
+              <div class="notifDropdown" *ngIf="notificationsOpen">
+                <div class="notifDropdownHead">
+                  <span>Notificaciones</span>
+                  <button type="button" class="notifClose" (click)="closeNotifications()">X</button>
+                </div>
+                <div class="notifTabs">
+                  <button
+                    type="button"
+                    class="notifTab"
+                    [class.active]="notificationsFilter === 'all'"
+                    (click)="setNotificationsFilter('all')"
+                  >
+                    Todas
+                  </button>
+                  <button
+                    type="button"
+                    class="notifTab"
+                    [class.active]="notificationsFilter === 'unread'"
+                    (click)="setNotificationsFilter('unread')"
+                  >
+                    No leidas
+                  </button>
+                </div>
+                <div class="notifSection">
+                  <div class="notifSectionHead">
+                    <span>Nuevas</span>
+                    <button type="button" class="notifLink" (click)="setNotificationsFilter('all')">Ver todo</button>
+                  </div>
+                  <div class="notifDropdownEmpty" *ngIf="!notificationsList.length">
+                    No tienes notificaciones nuevas.
+                  </div>
+                  <div class="notifDropdownList" *ngIf="notificationsList.length">
+                    <button
+                      type="button"
+                      class="notifDropdownItem"
+                      *ngFor="let message of notificationsList"
+                      (click)="openFromNotification(message)"
+                    >
+                      <div class="notifAvatar">
+                        <ng-container *ngIf="getMessageAvatar(message.actor) as avatarUrl; else notifFallback">
+                          <img [src]="avatarUrl" alt="" />
+                        </ng-container>
+                        <ng-template #notifFallback>
+                          <span class="bi bi-person-fill" aria-hidden="true"></span>
+                        </ng-template>
+                      </div>
+                      <div class="notifContent">
+                        <div class="notifDropdownMeta">
+                          <span class="notifDropdownName">{{ getNotificationTitle(message) }}</span>
+                          <span class="notifDropdownTime">{{ getRelativeTime(message) }}</span>
+                        </div>
+                        <div class="notifDropdownText">{{ getNotificationBody(message) }}</div>
+                      </div>
+                      <span class="notifDot" *ngIf="!isNotificationSeen(message)"></span>
+                    </button>
+                  </div>
+                </div>
+                <div class="notifSection">
+                  <div class="notifSectionHead">
+                    <span>Solicitudes de amistad</span>
+                    <button type="button" class="notifLink">Ver todo</button>
+                  </div>
+                  <div class="notifDropdownEmpty">No tienes solicitudes nuevas.</div>
+                </div>
+              </div>
+            </li>
             <li class="nav-item dropdown nav-user" *ngIf="identity as user">
               <a
                 class="nav-link dropdown-toggle d-flex align-items-center gap-2"
@@ -107,9 +249,106 @@
 
 
   <section class="content-area">
-    
-    
-    <router-outlet></router-outlet> 
+    <router-outlet></router-outlet>
+  </section>
+
+  <section
+    class="global-chat"
+    [class.open]="selectedReceiverId"
+    [ngStyle]="chatPositionStyle"
+    #chatPanel
+  >
+    <div class="global-chatHeader" *ngIf="selectedReceiver as receiver">
+      <div class="global-chatHeaderLeft" (pointerdown)="onChatDragStart($event)">
+        <div class="global-avatar">
+          <ng-container *ngIf="getAvatarUrl(receiver.image) as avatarUrl; else globalAvatarFallback">
+            <img [src]="avatarUrl" [alt]="receiver.name" />
+          </ng-container>
+          <ng-template #globalAvatarFallback>
+            <span class="bi bi-person-fill" aria-hidden="true"></span>
+          </ng-template>
+        </div>
+        <div class="global-chatMeta">
+          <div class="global-chatName">{{ receiver.name }} {{ receiver.surname }}</div>
+          <div class="global-chatStatus">
+            <span class="global-dot" [class.offline]="!isContactOnline(receiver)"></span>
+            <span>{{ isContactOnline(receiver) ? 'Activo' : 'Desconectado' }}</span>
+          </div>
+        </div>
+      </div>
+      <button
+        class="global-chatClose"
+        type="button"
+        aria-label="Cerrar chat"
+        (click)="closeChatPanel()"
+        (pointerdown)="$event.stopPropagation()"
+      >
+        x
+      </button>
+    </div>
+
+    <button
+      class="global-newMessages"
+      type="button"
+      *ngIf="newMessagesCount > 0"
+      (click)="goToLatest()"
+    >
+      {{ newMessagesCount }} nuevo{{ newMessagesCount === 1 ? '' : 's' }} mensaje{{ newMessagesCount === 1 ? '' : 's' }}
+    </button>
+
+    <div class="global-chatMessages" #chatMessages (scroll)="onChatScroll()">
+      <div class="global-state" *ngIf="receivedLoading || sentLoading">Cargando mensajes...</div>
+      <div class="global-state error" *ngIf="(receivedError || sentError) && !(receivedLoading || sentLoading)">
+        {{ receivedError || sentError }}
+      </div>
+      <div
+        class="global-state"
+        *ngIf="
+          !receivedLoading &&
+          !sentLoading &&
+          selectedReceiverId &&
+          !conversationMessages.length &&
+          !(receivedError || sentError)
+        "
+      >
+        No hay mensajes en esta conversacion.
+      </div>
+
+      <div class="global-bubble" *ngFor="let entry of conversationMessages" [class.you]="entry.isSelf">
+        {{ entry.message.text }}
+        <div class="global-bubbleTime" *ngIf="entry.time">
+          <span>{{ entry.time }}</span>
+          <span class="global-read" *ngIf="entry.isSelf" [class.read]="entry.viewed">
+            <span *ngIf="entry.viewed; else singleCheck">&#10003;&#10003;</span>
+            <ng-template #singleCheck>&#10003;</ng-template>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <form class="global-composer" (ngSubmit)="sendMessage()">
+      <input
+        class="global-input"
+        name="messageText"
+        [(ngModel)]="messageText"
+        placeholder="Escribe un mensaje..."
+        [disabled]="!selectedReceiverId || sendLoading"
+        #messageInput
+      />
+      <button class="global-send" type="submit" [disabled]="sendLoading || !canSend" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M22 2 11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <path
+            d="M22 2 15 22l-4-9-9-4 20-7Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </form>
+
+    <div class="global-alert error" *ngIf="sendError">{{ sendError }}</div>
   </section>
 </main>
  

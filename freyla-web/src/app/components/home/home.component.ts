@@ -1,13 +1,14 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
 import { User } from '../../models/user';
 import { Publication, PublicationComment, PublicationReaction } from '../../models/publication';
 import { UserService } from '../../services/user.service';
 import { PublicationService } from '../../services/publication.service';
 import { FollowService } from '../../services/follow.service';
+import { PreferenceService } from '../../services/preference.service';
 import { global } from '../../services/global';
 
 @Component({
@@ -31,6 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   publicationMedia: File | null = null;
   publicationMediaPreview: string | null = null;
   publicationMediaError = '';
+  composerEmotionsOpen = false;
   timeline: (Publication & { user: User })[] = [];
   timelineLoading = false;
   timelineError = '';
@@ -45,6 +47,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   editMediaIsVideo = false;
   editMediaError = '';
   editRemoveFile = false;
+  stickers = [
+    ...Array.from({ length: 80 }, (_, i) => String.fromCodePoint(0x1f600 + i)),
+    ...Array.from({ length: 40 }, (_, i) => String.fromCodePoint(0x1f680 + i)),
+  ];
   deleteLoadingId: string | null = null;
   reactionLoadingId: string | null = null;
   openReactionId: string | null = null;
@@ -55,7 +61,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   shareLoadingId: string | null = null;
 
   emojiReactions = ['👍', '❤️', '😂', '😮', '😢', '😡'];
-  stickerReactions = ['🔥', '🎉', '😎', '🤯', '😍'];
+  private readonly stickerExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
 
   quickLinks = [
     { label: 'Inicio', icon: 'bi-house-door', route: '/home' },
@@ -76,12 +82,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   contactsError = '';
   private readonly onlineThresholdMs = 30 * 1000;
   private readonly videoExtensions = new Set(['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+  private pendingPostId: string | null = null;
+  private viewedPublications = new Set<string>();
 
   constructor(
     private userService: UserService,
     private publicationService: PublicationService,
     private followService: FollowService,
-    private router: Router
+    private preferenceService: PreferenceService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -93,6 +103,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.stats = cachedStats;
     }
     this.loadCounters();
+    this.pendingPostId = this.route.snapshot.queryParamMap.get('post');
+    this.route.queryParamMap.subscribe((params) => {
+      this.pendingPostId = params.get('post');
+      if (this.pendingPostId) {
+        this.scrollToPublication(this.pendingPostId);
+      }
+    });
     this.loadTimeline(this.timelinePage);
     this.loadFollowingContacts();
   }
@@ -192,6 +209,50 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.publicationText = `${this.publicationText} ${value}`.trim();
   }
 
+  getPublicationDateMs(publication: Publication): number | null {
+    const raw = publication?.created_at;
+    if (!raw) {
+      return null;
+    }
+    const numeric = typeof raw === 'number' ? raw : Number(raw);
+    if (!Number.isNaN(numeric)) {
+      return numeric < 1_000_000_000_000 ? numeric * 1000 : numeric;
+    }
+    const parsed = Date.parse(String(raw));
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  formatRelativeTime(timestampMs: number): string {
+    const diffMs = Date.now() - timestampMs;
+    const diffSec = Math.max(0, Math.floor(diffMs / 1000));
+    if (diffSec < 60) {
+      return `hace ${diffSec}s`;
+    }
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) {
+      return `hace ${diffMin} min`;
+    }
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) {
+      return `hace ${diffHours} h`;
+    }
+    const diffDays = Math.floor(diffHours / 24);
+    return `hace ${diffDays} d`;
+  }
+
+  toggleComposerEmotions(): void {
+    this.composerEmotionsOpen = !this.composerEmotionsOpen;
+  }
+
+  getStickerUrl(file: string): string {
+    return `${global.url}/get-sticker/${file}`;
+  }
+
+  isStickerValue(value: string): boolean {
+    const extension = value.split('.').pop()?.toLowerCase() ?? '';
+    return this.stickerExtensions.has(extension);
+  }
+
   onMediaSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -243,6 +304,28 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.videoExtensions.has(extension);
   }
 
+  onVideoTimeUpdate(publication: Publication & { user: User }, event: Event): void {
+    const token = this.token;
+    const publicationId = publication?._id;
+    if (!token || !publicationId || this.viewedPublications.has(publicationId)) {
+      return;
+    }
+    const target = event.target as HTMLVideoElement | null;
+    if (!target) {
+      return;
+    }
+    if (target.currentTime >= 5) {
+      this.viewedPublications.add(publicationId);
+      this.preferenceService
+        .track('view', token, { publicationId })
+        .subscribe({ error: () => {} });
+    }
+  }
+
+  get videoTimeline(): (Publication & { user: User })[] {
+    return this.timeline.filter((publication) => !!publication.file && this.isVideoFile(publication.file));
+  }
+
   loadTimeline(page: number): void {
     const token = this.token;
     if (!token) {
@@ -258,6 +341,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.timeline = (resp?.publications ?? []) as (Publication & { user: User })[];
         this.timelinePage = resp?.page ?? page;
         this.timelinePages = resp?.pages ?? 1;
+        if (this.pendingPostId) {
+          this.scrollToPublication(this.pendingPostId);
+        }
       },
       error: (err) => {
         this.timeline = [];
@@ -267,6 +353,21 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.timelineLoading = false;
       },
     });
+  }
+
+  private scrollToPublication(publicationId: string): void {
+    if (!publicationId) {
+      return;
+    }
+    setTimeout(() => {
+      const element = document.getElementById(`publication-${publicationId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.classList.add('highlighted');
+        window.setTimeout(() => element.classList.remove('highlighted'), 1500);
+        this.pendingPostId = null;
+      }
+    }, 0);
   }
 
   loadFollowingContacts(): void {
@@ -456,6 +557,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (resp) => {
         publication.reactions = resp?.reactions ?? [];
         this.openReactionId = null;
+        this.preferenceService
+          .track('reaction', token, { publicationId })
+          .subscribe({ error: () => {} });
       },
       error: (err) => {
         this.timelineError = err?.error?.message || 'No se pudo reaccionar.';
@@ -499,6 +603,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     return Array.from(map.entries()).map(([value, count]) => ({ value, count }));
   }
 
+  getTotalReactions(publication: Publication & { user: User }): number {
+    return (publication.reactions ?? []).length;
+  }
+
   getUserReaction(publication: Publication & { user: User }): PublicationReaction | null {
     const identityId = this.getIdentityId(this.identity);
     if (!identityId) {
@@ -538,6 +646,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (resp) => {
         publication.comments = resp?.comments ?? [];
         this.commentText[publicationId] = '';
+        this.preferenceService
+          .track('comment', token, { publicationId, commentText: text })
+          .subscribe({ error: () => {} });
       },
       error: (err) => {
         this.commentError[publicationId] = err?.error?.message || 'No se pudo comentar.';
@@ -620,6 +731,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         next: () => {
           this.loadCounters();
           this.loadTimeline(1);
+          this.preferenceService
+            .track('reaction', token, { publicationId })
+            .subscribe({ error: () => {} });
           Swal.fire({
             icon: 'success',
             title: 'Compartido',

@@ -7,6 +7,7 @@ const mongoosePaginate = require('mongoose-pagination'); // 👈 esta es la del 
 const Publication = require('../models/publication');
 const User = require('../models/user');
 const Follow = require('../models/follow');
+const Notification = require('../models/notification');
 // const service = require('../services/index');
 
 function removeFilesOfUploads(res, filePath, message) {
@@ -257,7 +258,18 @@ async function addReaction(req, res) {
     await publication.save();
     await publication.populate('reactions.user', 'name surname nick image');
 
-    return res.status(200).send({ reactions: publication.reactions });
+    if (publication.user && publication.user.toString() !== userId) {
+      await Notification.create({
+        user: publication.user,
+        actor: userId,
+        type: 'reaction',
+        publication: publication._id,
+        created_at: moment().unix(),
+        seen: false,
+      });
+    }
+
+    return res.status(200).send({ reactions: publication.reactions });return res.status(200).send({ reactions: publication.reactions });
   } catch (err) {
     return res.status(500).send({
       message: 'Error al guardar la reaccion',
@@ -305,6 +317,7 @@ async function removeReaction(req, res) {
 async function addComment(req, res) {
   const publicationId = req.params.id;
   const { text } = req.body;
+  const userId = req.user.sub;
 
   if (!text) {
     return res.status(400).send({ message: 'Debes enviar un comentario' });
@@ -330,7 +343,19 @@ async function addComment(req, res) {
     await publication.save();
     await publication.populate('comments.user', 'name surname nick image');
 
-    return res.status(200).send({ comments: publication.comments });
+    if (publication.user && publication.user.toString() !== userId) {
+      await Notification.create({
+        user: publication.user,
+        actor: userId,
+        type: 'comment',
+        publication: publication._id,
+        content: newComment.text,
+        created_at: moment().unix(),
+        seen: false,
+      });
+    }
+
+    return res.status(200).send({ comments: publication.comments });return res.status(200).send({ comments: publication.comments });
   } catch (err) {
     return res.status(500).send({
       message: 'Error al guardar el comentario',
@@ -503,6 +528,10 @@ module.exports = {
   uploadImage,
   getImageFile
 };
+
+
+
+
 
 
 

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { User } from '../../models/user';
 import { FollowService } from '../../services/follow.service';
 import { UserService } from '../../services/user.service';
+import { PreferenceService } from '../../services/preference.service';
 import { global } from '../../services/global';
 
 type Identity = User & { id?: string; sub?: string };
@@ -36,7 +37,8 @@ export class UsersComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private userService: UserService,
-    private followService: FollowService
+    private followService: FollowService,
+    private preferenceService: PreferenceService
   ) {}
 
   ngOnInit(): void {
@@ -127,6 +129,9 @@ export class UsersComponent implements OnInit {
           this.followingIds = [...this.followingIds, userId];
         }
         this.loadUserStats(userId);
+        this.preferenceService
+          .track('follow', token, { authorId: userId })
+          .subscribe({ error: () => {} });
       },
       error: (err) => {
         this.errorMessage = err?.error?.message || 'No se pudo seguir al usuario.';

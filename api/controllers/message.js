@@ -109,7 +109,10 @@ async function getSentMessages(req, res) {
 async function getUnviewedMessages(req, res) {
   const userId = req.user.sub;
   try {
-    const unviewed = await Message.countDocuments({ receiver: userId, viewed: 'false' });
+    const unviewed = await Message.countDocuments({
+      receiver: userId,
+      viewed: { $in: ['false', false, '0', 0] }
+    });
     return res.status(200).send({ unviewed });
   } catch (err) {
     return res.status(500).send({ message: 'Error en la peticion', error: err.message });
@@ -117,18 +120,24 @@ async function getUnviewedMessages(req, res) {
 }
 
 function setViewedMessages(req, res) {
-  const userId = req.user.sub;  
+  const userId = req.user.sub;
+  const emitter = req.body?.emitter;
+  const query = { receiver: userId, viewed: { $in: ['false', false, '0', 0] } };
 
-  Message.Update({receiver: userId, viewed: 'false'}, {viewed: 'true'}, {"multi": true}, (err, messageUpdated) => {
-    if (err) {
-      return res.status(500).send({message: 'Error en la peticion', error: err.message});
+  if (emitter) {
+    if (!mongoose.Types.ObjectId.isValid(emitter)) {
+      return res.status(400).send({ message: 'emitter debe ser un ObjectId valido' });
     }
+    query.emitter = emitter;
+  }
 
-    return res.status(200).send({messages: messageUpdated});
-  });
-
-
-   
+  Message.updateMany(query, { viewed: 'true' })
+    .then((messageUpdated) => {
+      return res.status(200).send({ messages: messageUpdated });
+    })
+    .catch((err) => {
+      return res.status(500).send({ message: 'Error en la peticion', error: err.message });
+    });
 }
 
 module.exports = {

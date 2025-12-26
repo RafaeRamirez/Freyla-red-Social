@@ -1,0 +1,62 @@
+<section class="reels-page">
+  <div class="reels-header">
+    <p class="reels-eyebrow">Timeline</p>
+    <h1>{{ title }}</h1>
+    <p class="reels-subtitle">{{ subtitle }}</p>
+  </div>
+
+  <div class="reels-state" *ngIf="timelineLoading">
+    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+    <span>Cargando reels...</span>
+  </div>
+  <div class="reels-state error" *ngIf="timelineError && !timelineLoading">
+    {{ timelineError }}
+  </div>
+  <div class="reels-state" *ngIf="!timelineLoading && !videoTimeline.length && !timelineError">
+    Aun no hay reels para mostrar.
+  </div>
+
+  <div class="reels-grid" *ngIf="!timelineLoading && videoTimeline.length">
+    <article class="reel-card" *ngFor="let publication of videoTimeline" [attr.id]="'publication-' + publication._id">
+      <div class="reel-header">
+        <div class="reel-user">
+          <div class="reel-avatar">
+            <ng-container *ngIf="publication.user && getAvatarUrl(publication.user.image) as avatarUrl; else avatarFallback">
+              <img [src]="avatarUrl" [alt]="publication.user.name" />
+            </ng-container>
+            <ng-template #avatarFallback>
+              <span class="bi bi-person-circle" aria-hidden="true"></span>
+            </ng-template>
+          </div>
+          <div>
+            <h4>{{ publication.user.name }} {{ publication.user.surname }}</h4>
+            <p class="reel-nick">{{ '@' + publication.user.nick }}</p>
+            <ng-container *ngIf="getPublicationDateMs(publication) as dateMs">
+              <p class="reel-date">
+                {{ dateMs | date:'dd/MM/yyyy HH:mm' }} · {{ formatRelativeTime(dateMs) }}
+              </p>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+      <div class="reel-media" *ngIf="publication.file">
+        <video
+          [src]="getPublicationMediaUrl(publication.file)"
+          controls
+          playsinline
+          (timeupdate)="onVideoTimeUpdate(publication, $event)"
+        ></video>
+      </div>
+      <p class="reel-text" *ngIf="publication.text">{{ publication.text }}</p>
+    </article>
+  </div>
+
+  <div class="reels-actions" *ngIf="!timelineLoading && timelinePages > 1">
+    <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelinePrevPage)" [disabled]="timelinePage === 1">
+      Anterior
+    </button>
+    <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelineNextPage)" [disabled]="timelinePage === timelinePages">
+      Siguiente
+    </button>
+  </div>
+</section>

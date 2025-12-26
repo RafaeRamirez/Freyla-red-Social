@@ -13,6 +13,13 @@ const UserSchema = new Schema({
     role: { type: String, default: 'ROLE_USER' },
     image: String,
     lastActive: { type: Date, default: null },
+    preferences: {
+        tags: [{ value: String, score: Number }],
+        keywords: [{ value: String, score: Number }],
+        authors: [{ value: String, score: Number }],
+        contentTypes: [{ value: String, score: Number }],
+        updated_at: { type: Number, default: null },
+    },
 }, {
     timestamps: true // opcional: agrega createdAt y updatedAt automáticamente
 });

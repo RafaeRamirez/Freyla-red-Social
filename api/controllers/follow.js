@@ -2,6 +2,8 @@
 
 
 const Follow = require('../models/follow');
+const Notification = require('../models/notification');
+const moment = require('moment');
 
 // Seguir a un usuario
 async function saveFollow(req, res) {
@@ -23,6 +25,16 @@ async function saveFollow(req, res) {
     // Crear seguimiento
     const follow = new Follow({ user: userId, followed });
     const followStored = await follow.save();
+
+    if (userId !== followed) {
+      await Notification.create({
+        user: followed,
+        actor: userId,
+        type: 'follow',
+        created_at: moment().unix(),
+        seen: false,
+      });
+    }
 
     return res.status(200).send({ follow: followStored });
   } catch (err) {

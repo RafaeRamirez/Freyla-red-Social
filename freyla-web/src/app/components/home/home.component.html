@@ -79,22 +79,22 @@
             <span class="bi bi-image" aria-hidden="true"></span>
             <span>Foto o video</span>
           </label>
+          <button type="button" class="media-upload" (click)="toggleComposerEmotions()">
+            <span class="bi bi-emoji-smile" aria-hidden="true"></span>
+            <span>Emociones</span>
+          </button>
           <div class="media-preview" *ngIf="publicationMedia">
             <div class="media-thumb" *ngIf="publicationMediaPreview; else videoPreview">
               <img [src]="publicationMediaPreview" alt="Vista previa" />
             </div>
             <ng-template #videoPreview>
               <span class="bi bi-play-circle" aria-hidden="true"></span>
-              <span class="media-name">{{ publicationMedia?.name }}</span>
+              <span class="media-name">{{ publicationMedia.name }}</span>
             </ng-template>
             <button type="button" class="btn btn-outline-light btn-sm" (click)="clearMedia()">Quitar</button>
           </div>
         </div>
-        <div class="alert alert-danger py-2" *ngIf="publicationMediaError">
-          {{ publicationMediaError }}
-        </div>
-
-        <div class="composer-reactions">
+        <div class="composer-emotions" *ngIf="composerEmotionsOpen">
           <div class="reaction-row">
             <button
               type="button"
@@ -105,16 +105,25 @@
               {{ emoji }}
             </button>
           </div>
-          <div class="reaction-row sticker-row">
+          <div class="reaction-row sticker-row" *ngIf="stickers.length">
             <button
               type="button"
-              class="reaction-btn sticker-btn"
-              *ngFor="let sticker of stickerReactions"
+              class="reaction-btn sticker-btn sticker-image-btn"
+              *ngFor="let sticker of stickers"
               (click)="addComposerReaction(sticker)"
             >
-              {{ sticker }}
+              <ng-container *ngIf="isStickerValue(sticker); else stickerEmoji">
+                <img [src]="getStickerUrl(sticker)" alt="Sticker" />
+              </ng-container>
+              <ng-template #stickerEmoji>{{ sticker }}</ng-template>
             </button>
           </div>
+          <div class="sticker-empty" *ngIf="!stickers.length">
+            No hay stickers disponibles.
+          </div>
+        </div>
+        <div class="alert alert-danger py-2" *ngIf="publicationMediaError">
+          {{ publicationMediaError }}
         </div>
 
         <div class="alert alert-danger py-2" *ngIf="publicationError">
@@ -136,14 +145,6 @@
     <div class="panel timeline-panel">
       <div class="timeline-header">
         <h3>Timeline</h3>
-        <div class="timeline-actions" *ngIf="timelinePages > 1">
-          <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelinePrevPage)" [disabled]="timelinePage === 1">
-            Anterior
-          </button>
-          <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelineNextPage)" [disabled]="timelinePage === timelinePages">
-            Siguiente
-          </button>
-        </div>
       </div>
 
       <div class="timeline-state" *ngIf="timelineLoading">
@@ -157,7 +158,7 @@
         Aun no hay publicaciones en tu timeline.
       </div>
 
-      <article class="timeline-card" *ngFor="let publication of timeline">
+      <article class="timeline-card" *ngFor="let publication of timeline" [attr.id]="'publication-' + publication._id">
         <div class="timeline-user">
           <div class="timeline-user-info">
             <div class="timeline-avatar">
@@ -171,6 +172,11 @@
             <div>
               <h4>{{ publication.user.name }} {{ publication.user.surname }}</h4>
               <p class="timeline-nick">{{ '@' + publication.user.nick }}</p>
+              <ng-container *ngIf="getPublicationDateMs(publication) as dateMs">
+                <p class="timeline-date">
+                  {{ dateMs | date:'dd/MM/yyyy HH:mm' }} · {{ formatRelativeTime(dateMs) }}
+                </p>
+              </ng-container>
             </div>
           </div>
 
@@ -249,7 +255,7 @@
               </ng-container>
               <ng-template #editVideoPreview>
                 <span class="bi bi-play-circle" aria-hidden="true"></span>
-                <span class="media-name">{{ editMediaFile?.name }}</span>
+                <span class="media-name">{{ editMediaFile.name }}</span>
               </ng-template>
             </ng-container>
             <ng-template #currentMedia>
@@ -287,7 +293,7 @@
 
         <div class="timeline-media" *ngIf="publication.file && editingId !== publication._id">
           <ng-container *ngIf="isVideoFile(publication.file); else imageMedia">
-            <video [src]="getPublicationMediaUrl(publication.file)" controls></video>
+            <video [src]="getPublicationMediaUrl(publication.file)" controls (timeupdate)="onVideoTimeUpdate(publication, $event)"></video>
           </ng-container>
           <ng-template #imageMedia>
             <img [src]="getPublicationMediaUrl(publication.file)" alt="Publicacion" />
@@ -314,7 +320,7 @@
             <p class="shared-text">{{ shared.text }}</p>
             <div class="shared-media" *ngIf="shared.file as sharedFile">
               <ng-container *ngIf="isVideoFile(sharedFile); else sharedImageMedia">
-                <video [src]="getPublicationMediaUrl(sharedFile)" controls></video>
+                <video [src]="getPublicationMediaUrl(sharedFile)" controls (timeupdate)="onVideoTimeUpdate(publication, $event)"></video>
               </ng-container>
               <ng-template #sharedImageMedia>
                 <img [src]="getPublicationMediaUrl(sharedFile)" alt="Publicacion compartida" />
@@ -326,7 +332,12 @@
         <div class="timeline-meta">
           <div class="reaction-summary" *ngIf="getReactionSummary(publication).length">
             <span class="reaction-pill" *ngFor="let reaction of getReactionSummary(publication)">
-              <span class="reaction-icon">{{ reaction.value }}</span>
+              <span class="reaction-icon">
+                <ng-container *ngIf="isStickerValue(reaction.value); else emojiValue">
+                  <img [src]="getStickerUrl(reaction.value)" alt="Sticker" />
+                </ng-container>
+                <ng-template #emojiValue>{{ reaction.value }}</ng-template>
+              </span>
               <span class="reaction-count">{{ reaction.count }}</span>
             </span>
           </div>
@@ -339,6 +350,7 @@
               [disabled]="reactionLoadingId === publication._id"
             >
               Reaccionar
+              <span class="reaction-count-badge">{{ getTotalReactions(publication) }}</span>
             </button>
             <button
               type="button"
@@ -369,16 +381,22 @@
               {{ emoji }}
             </button>
           </div>
-          <div class="reaction-row sticker-row">
+          <div class="reaction-row sticker-row" *ngIf="stickers.length">
             <button
               type="button"
-              class="reaction-btn sticker-btn"
-              *ngFor="let sticker of stickerReactions"
+              class="reaction-btn sticker-btn sticker-image-btn"
+              *ngFor="let sticker of stickers"
               (click)="reactToPublication(publication, 'sticker', sticker)"
               [class.active]="isReactionActive(publication, 'sticker', sticker)"
             >
-              {{ sticker }}
+              <ng-container *ngIf="isStickerValue(sticker); else stickerPickerEmoji">
+                <img [src]="getStickerUrl(sticker)" alt="Sticker" />
+              </ng-container>
+              <ng-template #stickerPickerEmoji>{{ sticker }}</ng-template>
             </button>
+          </div>
+          <div class="sticker-empty" *ngIf="!stickers.length">
+            Aun no hay stickers.
           </div>
         </div>
 
@@ -447,6 +465,15 @@
           </div>
         </div>
       </article>
+
+      <div class="timeline-actions timeline-actions-footer" *ngIf="!timelineLoading && timelinePages > 1">
+        <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelinePrevPage)" [disabled]="timelinePage === 1">
+          Anterior
+        </button>
+        <button class="btn btn-outline-light" type="button" (click)="loadTimeline(timelineNextPage)" [disabled]="timelinePage === timelinePages">
+          Siguiente
+        </button>
+      </div>
     </div>
   </main>
 

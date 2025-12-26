@@ -107,7 +107,7 @@ export class PublicationService {
       pages: number;
       page: number;
       publications: Publication[];
-    }>(`${this.apiUrl}/publications/${page}`, this.authHeaders(token));
+    }>(`${this.apiUrl}/publications-personalized/${page}`, this.authHeaders(token));
   }
 
   private authHeaders(token: string) {
